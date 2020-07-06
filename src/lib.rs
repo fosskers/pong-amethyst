@@ -69,6 +69,7 @@ fn initialize_paddles(world: &mut World, sprite_sheet_handle: Handle<SpriteSheet
     left_transform.set_translation_xyz(PADDLE_WIDTH * 0.5, y, 0.0);
     right_transform.set_translation_xyz(ARENA_WIDTH - PADDLE_WIDTH * 0.5, y, 0.0);
 
+    // A component to actually render the paddles.
     let sprite_render = SpriteRender {
         sprite_sheet: sprite_sheet_handle,
         sprite_number: 0,
