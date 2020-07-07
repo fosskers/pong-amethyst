@@ -1,4 +1,5 @@
 use amethyst::assets::{AssetStorage, Handle, Loader};
+use amethyst::core::timing::Time;
 use amethyst::core::transform::Transform;
 use amethyst::ecs::prelude::{Component, DenseVecStorage};
 use amethyst::prelude::*;
@@ -50,16 +51,36 @@ impl Component for Paddle {
     type Storage = DenseVecStorage<Paddle>;
 }
 
-pub struct Pong;
+#[derive(Default)]
+pub struct Pong {
+    ball_spawn_timer: Option<f32>,
+    sprite_sheet: Option<Handle<SpriteSheet>>,
+}
 
 impl SimpleState for Pong {
     fn on_start(&mut self, data: StateData<GameData>) {
         let world = data.world;
         let sprite_sheet_handle = load_sprite_sheet(world);
 
-        initialize_ball(world, sprite_sheet_handle.clone());
-        initialize_paddles(world, sprite_sheet_handle);
+        self.ball_spawn_timer.replace(1.0);
+        self.sprite_sheet.replace(sprite_sheet_handle);
+
+        initialize_paddles(world, self.sprite_sheet.clone().unwrap());
         initialize_camera(world);
+    }
+
+    fn update(&mut self, data: &mut StateData<GameData>) -> SimpleTrans {
+        if let Some(mut timer) = self.ball_spawn_timer.take() {
+            timer -= data.world.fetch::<Time>().delta_seconds();
+
+            if timer <= 0.0 {
+                initialize_ball(data.world, self.sprite_sheet.clone().unwrap());
+            } else {
+                self.ball_spawn_timer.replace(timer);
+            }
+        }
+
+        Trans::None
     }
 }
 

@@ -38,7 +38,7 @@ fn main() -> amethyst::Result<()> {
         );
 
     let assets_dir = app_root.join("assets");
-    let mut game = Application::new(assets_dir, pong::Pong, game_data)?;
+    let mut game = Application::new(assets_dir, pong::Pong::default(), game_data)?;
     game.run();
 
     Ok(())
