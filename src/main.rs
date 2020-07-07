@@ -6,6 +6,7 @@ use amethyst::prelude::*;
 use amethyst::renderer::plugins::{RenderFlat2D, RenderToWindow};
 use amethyst::renderer::types::DefaultBackend;
 use amethyst::renderer::RenderingBundle;
+use systems::bounce::BounceSystem;
 use systems::move_balls::MoveBallSystem;
 use systems::paddle::PaddleSystem;
 
@@ -29,7 +30,12 @@ fn main() -> amethyst::Result<()> {
         .with_bundle(TransformBundle::new())?
         .with_bundle(input_bundle)?
         .with(PaddleSystem, "paddle_system", &["input_system"])
-        .with(MoveBallSystem, "move_ball_system", &["input_system"]);
+        .with(MoveBallSystem, "ball_system", &[])
+        .with(
+            BounceSystem,
+            "collision_system",
+            &["paddle_system", "ball_system"],
+        );
 
     let assets_dir = app_root.join("assets");
     let mut game = Application::new(assets_dir, pong::Pong, game_data)?;
