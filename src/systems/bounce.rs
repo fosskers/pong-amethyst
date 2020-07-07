@@ -1,6 +1,11 @@
+use amethyst::assets::AssetStorage;
+use amethyst::audio::output::Output;
+use amethyst::audio::Source;
 use amethyst::core::Transform;
-use amethyst::ecs::{Join, ReadStorage, System, WriteStorage};
+use amethyst::ecs::{Join, Read, ReadExpect, ReadStorage, System, WriteStorage};
+use pong::audio;
 use pong::{Ball, Paddle, Side, ARENA_HEIGHT};
+use std::ops::Deref;
 
 pub struct BounceSystem;
 
@@ -9,19 +14,29 @@ impl<'s> System<'s> for BounceSystem {
         WriteStorage<'s, Ball>,
         ReadStorage<'s, Paddle>,
         ReadStorage<'s, Transform>,
+        Read<'s, AssetStorage<Source>>,
+        ReadExpect<'s, audio::Sounds>,
+        Option<Read<'s, Output>>,
     );
 
-    fn run(&mut self, (mut balls, paddles, transforms): Self::SystemData) {
+    fn run(
+        &mut self,
+        (mut balls, paddles, transforms, storage, sounds, audio_output): Self::SystemData,
+    ) {
         for (ball, transform) in (&mut balls, &transforms).join() {
             let ball_x = transform.translation().x;
             let ball_y = transform.translation().y;
+            let output = audio_output.as_ref().map(|o| o.deref());
 
+            // Bounce off the walls.
             if (ball_y <= ball.radius && ball.velocity[1] < 0.0)
                 || (ball_y >= ARENA_HEIGHT - ball.radius && ball.velocity[1] > 0.0)
             {
                 ball.velocity[1] *= -1.0;
+                audio::play_bounce_sound(&sounds, &storage, output);
             }
 
+            // Bounce off the paddles.
             for (paddle, paddle_transform) in (&paddles, &transforms).join() {
                 // Bottom corner of the paddle.
                 let paddle_x = paddle_transform.translation().x - (paddle.width * 0.5);
@@ -36,8 +51,14 @@ impl<'s> System<'s> for BounceSystem {
                     paddle_y + paddle.height + ball.radius,
                 ) {
                     match paddle.side {
-                        Side::Left if ball.velocity[0] < 0.0 => ball.velocity[0] *= -1.0,
-                        Side::Right if ball.velocity[0] > 0.0 => ball.velocity[0] *= -1.0,
+                        Side::Left if ball.velocity[0] < 0.0 => {
+                            ball.velocity[0] *= -1.0;
+                            audio::play_bounce_sound(&sounds, &storage, output);
+                        }
+                        Side::Right if ball.velocity[0] > 0.0 => {
+                            ball.velocity[0] *= -1.0;
+                            audio::play_bounce_sound(&sounds, &storage, output);
+                        }
                         _ => (),
                     }
                 }

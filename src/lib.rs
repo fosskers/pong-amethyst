@@ -1,3 +1,5 @@
+pub mod audio;
+
 use amethyst::assets::{AssetStorage, Handle, Loader};
 use amethyst::core::timing::Time;
 use amethyst::core::transform::Transform;
@@ -80,6 +82,7 @@ impl SimpleState for Pong {
         initialize_paddles(world, self.sprite_sheet.clone().unwrap());
         initialize_camera(world);
         initialize_scoreboard(world);
+        audio::initialize_audio(world);
     }
 
     fn update(&mut self, data: &mut StateData<GameData>) -> SimpleTrans {

@@ -1,5 +1,6 @@
 mod systems;
 
+use amethyst::audio::AudioBundle;
 use amethyst::core::transform::TransformBundle;
 use amethyst::input::{InputBundle, StringBindings};
 use amethyst::prelude::*;
@@ -30,6 +31,7 @@ fn main() -> amethyst::Result<()> {
         .with_bundle(TransformBundle::new())?
         .with_bundle(input_bundle)?
         .with_bundle(UiBundle::<StringBindings>::new())?
+        .with_bundle(AudioBundle::default())?
         .with(PaddleSystem, "paddle_system", &["input_system"])
         .with(MoveBallSystem, "ball_system", &[])
         .with(
