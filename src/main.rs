@@ -6,9 +6,7 @@ use amethyst::prelude::*;
 use amethyst::renderer::plugins::{RenderFlat2D, RenderToWindow};
 use amethyst::renderer::types::DefaultBackend;
 use amethyst::renderer::RenderingBundle;
-use systems::bounce::BounceSystem;
-use systems::move_balls::MoveBallSystem;
-use systems::paddle::PaddleSystem;
+use systems::{BounceSystem, MoveBallSystem, PaddleSystem};
 
 fn main() -> amethyst::Result<()> {
     amethyst::start_logger(Default::default());

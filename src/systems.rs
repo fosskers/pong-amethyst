@@ -1,3 +1,7 @@
-pub mod bounce;
-pub mod move_balls;
-pub mod paddle;
+pub use bounce::BounceSystem;
+pub use move_balls::MoveBallSystem;
+pub use paddle::PaddleSystem;
+
+mod bounce;
+mod move_balls;
+mod paddle;
