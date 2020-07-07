@@ -1,8 +1,7 @@
-use amethyst::core::{SystemDesc, Transform};
+use amethyst::core::Transform;
 use amethyst::derive::SystemDesc;
-use amethyst::ecs::{Join, Read, ReadStorage, System, SystemData, World, WriteStorage};
+use amethyst::ecs::{Join, Read, ReadStorage, System, SystemData, WriteStorage};
 use amethyst::input::{InputHandler, StringBindings};
-
 use pong::{Paddle, Side, ARENA_HEIGHT, PADDLE_HEIGHT};
 
 #[derive(SystemDesc)]
