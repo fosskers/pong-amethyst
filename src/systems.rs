@@ -1,9 +1,9 @@
 pub use bounce::BounceSystem;
 pub use move_balls::MoveBallSystem;
 pub use paddle::PaddleSystem;
-pub use winner::WinnerSystem;
+pub use score::ScoreSystem;
 
 mod bounce;
 mod move_balls;
 mod paddle;
-mod winner;
+mod score;

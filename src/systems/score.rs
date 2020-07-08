@@ -8,9 +8,9 @@ use amethyst::ecs::{Join, Read, ReadExpect, System, Write, WriteStorage};
 use amethyst::ui::UiText;
 use std::ops::Deref;
 
-pub struct WinnerSystem;
+pub struct ScoreSystem;
 
-impl<'s> System<'s> for WinnerSystem {
+impl<'s> System<'s> for ScoreSystem {
     type SystemData = (
         WriteStorage<'s, Ball>,
         WriteStorage<'s, Transform>,

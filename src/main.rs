@@ -7,7 +7,7 @@ use amethyst::renderer::types::DefaultBackend;
 use amethyst::renderer::RenderingBundle;
 use amethyst::ui::{RenderUi, UiBundle};
 use pong::audio::Music;
-use pong::systems::{BounceSystem, MoveBallSystem, PaddleSystem, WinnerSystem};
+use pong::systems::{BounceSystem, MoveBallSystem, PaddleSystem, ScoreSystem};
 
 fn main() -> amethyst::Result<()> {
     amethyst::start_logger(Default::default());
@@ -43,7 +43,7 @@ fn main() -> amethyst::Result<()> {
             "collision_system",
             &["paddle_system", "ball_system"],
         )
-        .with(WinnerSystem, "winner_system", &["ball_system"]);
+        .with(ScoreSystem, "score_system", &["ball_system"]);
 
     let assets_dir = app_root.join("assets");
     let mut game = Application::new(assets_dir, pong::Pong::default(), game_data)?;
