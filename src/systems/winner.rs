@@ -1,7 +1,7 @@
+use crate::core::{Ball, ScoreBoard, ScoreText, ARENA_WIDTH};
 use amethyst::core::Transform;
 use amethyst::ecs::{Join, ReadExpect, System, Write, WriteStorage};
 use amethyst::ui::UiText;
-use pong::core::{Ball, ScoreBoard, ScoreText, ARENA_WIDTH};
 
 pub struct WinnerSystem;
 

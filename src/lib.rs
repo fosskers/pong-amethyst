@@ -1,5 +1,6 @@
 pub mod audio;
 pub mod core;
+pub mod systems;
 
 use crate::core::*;
 use amethyst::assets::{AssetStorage, Handle, Loader};

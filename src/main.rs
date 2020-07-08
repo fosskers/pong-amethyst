@@ -1,5 +1,3 @@
-mod systems;
-
 use amethyst::audio::AudioBundle;
 use amethyst::core::transform::TransformBundle;
 use amethyst::input::{InputBundle, StringBindings};
@@ -8,7 +6,7 @@ use amethyst::renderer::plugins::{RenderFlat2D, RenderToWindow};
 use amethyst::renderer::types::DefaultBackend;
 use amethyst::renderer::RenderingBundle;
 use amethyst::ui::{RenderUi, UiBundle};
-use systems::{BounceSystem, MoveBallSystem, PaddleSystem, WinnerSystem};
+use pong::systems::{BounceSystem, MoveBallSystem, PaddleSystem, WinnerSystem};
 
 fn main() -> amethyst::Result<()> {
     amethyst::start_logger(Default::default());

@@ -1,10 +1,10 @@
+use crate::audio;
+use crate::core::*;
 use amethyst::assets::AssetStorage;
 use amethyst::audio::output::Output;
 use amethyst::audio::Source;
 use amethyst::core::Transform;
 use amethyst::ecs::{Join, Read, ReadExpect, ReadStorage, System, WriteStorage};
-use pong::audio;
-use pong::core::*;
 use std::ops::Deref;
 
 pub struct BounceSystem;

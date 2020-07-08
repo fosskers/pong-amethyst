@@ -1,8 +1,8 @@
+use crate::core::Ball;
 use amethyst::core::timing::Time;
 use amethyst::core::Transform;
 use amethyst::derive::SystemDesc;
 use amethyst::ecs::{Join, Read, ReadStorage, System, SystemData, WriteStorage};
-use pong::core::Ball;
 
 #[derive(SystemDesc)]
 pub struct MoveBallSystem;
