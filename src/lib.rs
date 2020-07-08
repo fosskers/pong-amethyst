@@ -5,7 +5,7 @@ pub mod systems;
 use crate::core::*;
 use amethyst::assets::{AssetStorage, Handle, Loader};
 use amethyst::core::transform::Transform;
-use amethyst::input::{self, VirtualKeyCode};
+use amethyst::input::InputEvent;
 use amethyst::prelude::*;
 use amethyst::renderer::{
     Camera, ImageFormat, SpriteRender, SpriteSheet, SpriteSheetFormat, Texture,
@@ -35,7 +35,7 @@ impl SimpleState for Pong {
 
     fn handle_event(&mut self, _: StateData<GameData>, event: StateEvent) -> SimpleTrans {
         match event {
-            StateEvent::Window(e) if input::is_key_down(&e, VirtualKeyCode::Q) => Trans::Pop,
+            StateEvent::Input(InputEvent::ActionPressed(a)) if a == "quit" => Trans::Pop,
             _ => Trans::None,
         }
     }
