@@ -35,3 +35,11 @@ pub fn play_bounce_sound(sounds: &Sounds, storage: &AssetStorage<Source>, output
         }
     }
 }
+
+pub fn play_score_sound(sounds: &Sounds, storage: &AssetStorage<Source>, output: Option<&Output>) {
+    if let Some(o) = output {
+        if let Some(sound) = storage.get(&sounds.score_sfx) {
+            o.play_once(sound, 1.0);
+        }
+    }
+}

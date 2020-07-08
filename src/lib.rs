@@ -12,6 +12,7 @@ use amethyst::renderer::{
 };
 use amethyst::ui::{Anchor, TtfFormat, UiText, UiTransform};
 
+/// The main game state.
 #[derive(Default)]
 pub struct Pong {
     ball_spawn_timer: Option<f32>,

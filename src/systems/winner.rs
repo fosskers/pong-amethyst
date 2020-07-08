@@ -1,7 +1,12 @@
+use crate::audio;
 use crate::core::{Ball, ScoreBoard, ScoreText, ARENA_WIDTH};
+use amethyst::assets::AssetStorage;
+use amethyst::audio::output::Output;
+use amethyst::audio::Source;
 use amethyst::core::Transform;
-use amethyst::ecs::{Join, ReadExpect, System, Write, WriteStorage};
+use amethyst::ecs::{Join, Read, ReadExpect, System, Write, WriteStorage};
 use amethyst::ui::UiText;
+use std::ops::Deref;
 
 pub struct WinnerSystem;
 
@@ -12,11 +17,14 @@ impl<'s> System<'s> for WinnerSystem {
         WriteStorage<'s, UiText>,
         Write<'s, ScoreBoard>,
         ReadExpect<'s, ScoreText>,
+        Read<'s, AssetStorage<Source>>,
+        ReadExpect<'s, audio::Sounds>,
+        Option<Read<'s, Output>>,
     );
 
     fn run(
         &mut self,
-        (mut balls, mut locals, mut ui_text, mut scores, score_text): Self::SystemData,
+        (mut balls, mut locals, mut ui_text, mut scores, score_text, storage, sounds, audio_output): Self::SystemData,
     ) {
         for (ball, transform) in (&mut balls, &mut locals).join() {
             let ball_x = transform.translation().x;
@@ -42,8 +50,10 @@ impl<'s> System<'s> for WinnerSystem {
             };
 
             if did_hit {
+                let output = audio_output.as_ref().map(|o| o.deref());
                 ball.velocity[0] *= -1.0;
                 transform.set_translation_x(ARENA_WIDTH / 2.0);
+                audio::play_score_sound(&sounds, &storage, output);
             }
         }
     }
