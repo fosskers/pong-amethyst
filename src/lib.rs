@@ -102,11 +102,15 @@ fn initialize_ball(world: &mut World, sprite_sheet: Handle<SpriteSheet>) {
         velocity: [BALL_VELOCITY_X, BALL_VELOCITY_Y],
     };
 
+    // TODO Set the initial countdown to 1 second.
+    let active = Active { countdown: None };
+
     world
         .create_entity()
         .with(sprite_render)
         .with(ball)
         .with(local_transform)
+        .with(active)
         .build();
 }
 

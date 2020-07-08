@@ -10,6 +10,16 @@ pub const BALL_VELOCITY_X: f32 = 75.0;
 pub const BALL_VELOCITY_Y: f32 = 50.0;
 pub const BALL_RADIUS: f32 = 2.0;
 
+/// A component for Entities whose activity can be halted.
+pub struct Active {
+    /// `None` implies that the entity is active.
+    pub countdown: Option<f32>,
+}
+
+impl Component for Active {
+    type Storage = DenseVecStorage<Active>;
+}
+
 #[derive(Default)]
 pub struct ScoreBoard {
     pub score_left: u32,
