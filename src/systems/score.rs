@@ -3,7 +3,7 @@ use crate::core::{Active, Ball, ScoreBoard, ScoreText, ServeText, ARENA_WIDTH};
 use amethyst::assets::AssetStorage;
 use amethyst::audio::output::Output;
 use amethyst::audio::Source;
-use amethyst::core::Transform;
+use amethyst::core::{Hidden, Transform};
 use amethyst::ecs::{Join, Read, ReadExpect, System, Write, WriteStorage};
 use amethyst::ui::UiText;
 use std::ops::Deref;
@@ -22,6 +22,7 @@ impl<'s> System<'s> for ScoreSystem {
         Option<Read<'s, Output>>,
         WriteStorage<'s, Active>,
         ReadExpect<'s, ServeText>,
+        WriteStorage<'s, Hidden>,
     );
 
     fn run(
@@ -37,6 +38,7 @@ impl<'s> System<'s> for ScoreSystem {
             audio_output,
             mut actives,
             serve_text,
+            mut hiddens,
         ): Self::SystemData,
     ) {
         for (ball, transform, active) in (&mut balls, &mut locals, &mut actives).join() {
@@ -68,10 +70,7 @@ impl<'s> System<'s> for ScoreSystem {
                 transform.set_translation_x(ARENA_WIDTH / 2.0);
                 audio::play_score_sound(&sounds, &storage, output);
                 active.countdown.replace(1.0);
-
-                if let Some(text) = ui_text.get_mut(serve_text.0) {
-                    text.color = [1.0, 1.0, 1.0, 1.0];
-                }
+                hiddens.remove(serve_text.0);
             }
         }
     }
