@@ -3,5 +3,7 @@
         "left_paddle": Emulated(pos: Key(W), neg: Key(R)),
         "right_paddle": Emulated(pos: Key(Up), neg: Key(Down)),
     },
-    actions: {},
+    actions: {
+        "quit": [[Key(Q)]],
+    },
 )
