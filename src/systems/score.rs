@@ -1,5 +1,5 @@
 use crate::audio;
-use crate::core::{Active, Ball, ScoreBoard, ScoreText, ARENA_WIDTH};
+use crate::core::{Active, Ball, ScoreBoard, ScoreText, ServeText, ARENA_WIDTH};
 use amethyst::assets::AssetStorage;
 use amethyst::audio::output::Output;
 use amethyst::audio::Source;
@@ -21,6 +21,7 @@ impl<'s> System<'s> for ScoreSystem {
         ReadExpect<'s, audio::Sounds>,
         Option<Read<'s, Output>>,
         WriteStorage<'s, Active>,
+        ReadExpect<'s, ServeText>,
     );
 
     fn run(
@@ -35,6 +36,7 @@ impl<'s> System<'s> for ScoreSystem {
             sounds,
             audio_output,
             mut actives,
+            serve_text,
         ): Self::SystemData,
     ) {
         for (ball, transform, active) in (&mut balls, &mut locals, &mut actives).join() {
@@ -66,6 +68,10 @@ impl<'s> System<'s> for ScoreSystem {
                 transform.set_translation_x(ARENA_WIDTH / 2.0);
                 audio::play_score_sound(&sounds, &storage, output);
                 active.countdown.replace(1.0);
+
+                if let Some(text) = ui_text.get_mut(serve_text.0) {
+                    text.color = [1.0, 1.0, 1.0, 1.0];
+                }
             }
         }
     }

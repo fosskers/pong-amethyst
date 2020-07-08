@@ -28,6 +28,7 @@ impl SimpleState for Pong {
         initialize_camera(world);
         initialize_scoreboard(world);
         initialize_ball(world, self.sprite_sheet.clone().unwrap());
+        initialize_messages(world);
         audio::initialize_audio(world);
     }
 }
@@ -97,6 +98,39 @@ fn initialize_ball(world: &mut World, sprite_sheet: Handle<SpriteSheet>) {
         .with(local_transform)
         .with(active)
         .build();
+}
+
+fn initialize_messages(world: &mut World) {
+    let font = world.read_resource::<Loader>().load(
+        "font/square.ttf",
+        TtfFormat,
+        (),
+        &world.read_resource(),
+    );
+
+    let transform = UiTransform::new(
+        "Service".to_string(),
+        Anchor::BottomMiddle,
+        Anchor::BottomMiddle,
+        0.0,
+        0.0,
+        1.0,
+        200.0,
+        50.0,
+    );
+
+    let text = world
+        .create_entity()
+        .with(transform)
+        .with(UiText::new(
+            font,
+            "Service!".to_string(),
+            [1.0, 1.0, 1.0, 1.0],
+            50.0,
+        ))
+        .build();
+
+    world.insert(ServeText(text));
 }
 
 fn initialize_scoreboard(world: &mut World) {
