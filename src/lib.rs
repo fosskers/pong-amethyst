@@ -4,7 +4,6 @@ pub mod systems;
 
 use crate::core::*;
 use amethyst::assets::{AssetStorage, Handle, Loader};
-use amethyst::core::timing::Time;
 use amethyst::core::transform::Transform;
 use amethyst::prelude::*;
 use amethyst::renderer::{
@@ -15,7 +14,6 @@ use amethyst::ui::{Anchor, TtfFormat, UiText, UiTransform};
 /// The main game state.
 #[derive(Default)]
 pub struct Pong {
-    ball_spawn_timer: Option<f32>,
     sprite_sheet: Option<Handle<SpriteSheet>>,
 }
 
@@ -24,27 +22,13 @@ impl SimpleState for Pong {
         let world = data.world;
         let sprite_sheet_handle = load_sprite_sheet(world);
 
-        self.ball_spawn_timer.replace(1.0);
         self.sprite_sheet.replace(sprite_sheet_handle);
 
         initialize_paddles(world, self.sprite_sheet.clone().unwrap());
         initialize_camera(world);
         initialize_scoreboard(world);
+        initialize_ball(world, self.sprite_sheet.clone().unwrap());
         audio::initialize_audio(world);
-    }
-
-    fn update(&mut self, data: &mut StateData<GameData>) -> SimpleTrans {
-        if let Some(mut timer) = self.ball_spawn_timer.take() {
-            timer -= data.world.fetch::<Time>().delta_seconds();
-
-            if timer <= 0.0 {
-                initialize_ball(data.world, self.sprite_sheet.clone().unwrap());
-            } else {
-                self.ball_spawn_timer.replace(timer);
-            }
-        }
-
-        Trans::None
     }
 }
 
@@ -102,8 +86,9 @@ fn initialize_ball(world: &mut World, sprite_sheet: Handle<SpriteSheet>) {
         velocity: [BALL_VELOCITY_X, BALL_VELOCITY_Y],
     };
 
-    // TODO Set the initial countdown to 1 second.
-    let active = Active { countdown: None };
+    let active = Active {
+        countdown: Some(1.0),
+    };
 
     world
         .create_entity()
