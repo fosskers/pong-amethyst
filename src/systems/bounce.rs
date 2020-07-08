@@ -4,7 +4,7 @@ use amethyst::audio::Source;
 use amethyst::core::Transform;
 use amethyst::ecs::{Join, Read, ReadExpect, ReadStorage, System, WriteStorage};
 use pong::audio;
-use pong::{Ball, Paddle, Side, ARENA_HEIGHT};
+use pong::core::*;
 use std::ops::Deref;
 
 pub struct BounceSystem;
