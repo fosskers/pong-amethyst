@@ -12,6 +12,22 @@ use amethyst::renderer::{
 };
 use amethyst::ui::{Anchor, TtfFormat, UiText, UiTransform};
 
+/// Pause the game.
+pub struct Pause;
+
+impl SimpleState for Pause {
+    fn handle_event(&mut self, _: StateData<GameData>, event: StateEvent) -> SimpleTrans {
+        match event {
+            StateEvent::Input(InputEvent::ActionPressed(a)) if a == "quit" => Trans::Quit,
+            StateEvent::Input(InputEvent::ActionPressed(a)) if a == "pause" => {
+                println!("Unpaused.");
+                Trans::Pop
+            }
+            _ => Trans::None,
+        }
+    }
+}
+
 /// The main game state.
 #[derive(Default)]
 pub struct Pong {
@@ -35,7 +51,11 @@ impl SimpleState for Pong {
 
     fn handle_event(&mut self, _: StateData<GameData>, event: StateEvent) -> SimpleTrans {
         match event {
-            StateEvent::Input(InputEvent::ActionPressed(a)) if a == "quit" => Trans::Pop,
+            StateEvent::Input(InputEvent::ActionPressed(a)) if a == "quit" => Trans::Quit,
+            StateEvent::Input(InputEvent::ActionPressed(a)) if a == "pause" => {
+                println!("Paused!");
+                Trans::Push(Box::new(Pause))
+            }
             _ => Trans::None,
         }
     }
