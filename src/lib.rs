@@ -5,6 +5,8 @@ pub mod systems;
 use crate::core::*;
 use amethyst::assets::{AssetStorage, Handle, Loader};
 use amethyst::core::transform::Transform;
+use amethyst::core::ArcThreadPool;
+use amethyst::ecs::{Dispatcher, DispatcherBuilder};
 use amethyst::input::InputEvent;
 use amethyst::prelude::*;
 use amethyst::renderer::{
@@ -30,23 +32,51 @@ impl SimpleState for Pause {
 
 /// The main game state.
 #[derive(Default)]
-pub struct Pong {
+pub struct Pong<'a, 'b> {
     sprite_sheet: Option<Handle<SpriteSheet>>,
+    dispatcher: Option<Dispatcher<'a, 'b>>,
 }
 
-impl SimpleState for Pong {
+impl<'a, 'b> SimpleState for Pong<'a, 'b> {
     fn on_start(&mut self, data: StateData<GameData>) {
         let world = data.world;
-        let sprite_sheet_handle = load_sprite_sheet(world);
 
+        // Initial the system dispatcher unique to the "running" game state.
+        let mut builder = DispatcherBuilder::new();
+        builder.add(systems::MoveBallSystem, "ball_system", &[]);
+        builder.add(systems::PaddleSystem, "paddle_system", &[]);
+        builder.add(
+            systems::BounceSystem,
+            "collision_system",
+            &["paddle_system", "ball_system"],
+        );
+        builder.add(systems::ScoreSystem, "score_system", &["ball_system"]);
+
+        let mut dispatcher = builder
+            .with_pool((*world.read_resource::<ArcThreadPool>()).clone())
+            .build();
+        dispatcher.setup(world);
+        self.dispatcher = Some(dispatcher);
+
+        // Set up the sprites.
+        let sprite_sheet_handle = load_sprite_sheet(world);
         self.sprite_sheet.replace(sprite_sheet_handle);
 
+        // Create all entities.
         initialize_paddles(world, self.sprite_sheet.clone().unwrap());
         initialize_camera(world);
         initialize_scoreboard(world);
         initialize_ball(world, self.sprite_sheet.clone().unwrap());
         initialize_messages(world);
         audio::initialize_audio(world);
+    }
+
+    fn update(&mut self, data: &mut StateData<GameData>) -> SimpleTrans {
+        if let Some(dispatcher) = self.dispatcher.as_mut() {
+            dispatcher.dispatch(&data.world);
+        }
+
+        Trans::None
     }
 
     fn handle_event(&mut self, _: StateData<GameData>, event: StateEvent) -> SimpleTrans {
