@@ -12,8 +12,7 @@ use amethyst::prelude::*;
 use amethyst::renderer::{
     Camera, ImageFormat, SpriteRender, SpriteSheet, SpriteSheetFormat, Texture,
 };
-use amethyst::ui::FontHandle;
-use amethyst::ui::{Anchor, TtfFormat, UiText, UiTransform};
+use amethyst::ui::{Anchor, FontHandle, TtfFormat, UiText, UiTransform};
 
 /// The "paused" `State`.
 pub struct Pause {
@@ -100,6 +99,17 @@ impl<'a, 'b> SimpleState for Pong<'a, 'b> {
     }
 
     fn update(&mut self, data: &mut StateData<GameData>) -> SimpleTrans {
+        // Special scope to make the borrowed `score_board` disappear as soon as
+        // it's no longer needed. The dispatch below will invoke a system that
+        // wants to borrow the `ScoreBoard` too, which causes a panic.
+        {
+            let score_board = data.world.read_resource::<ScoreBoard>();
+
+            if score_board.score_left >= 10 || score_board.score_right >= 10 {
+                return Trans::Quit;
+            }
+        }
+
         if let Some(dispatcher) = self.dispatcher.as_mut() {
             dispatcher.dispatch(&data.world);
         }
