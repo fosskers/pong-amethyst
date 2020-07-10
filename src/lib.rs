@@ -12,18 +12,25 @@ use amethyst::prelude::*;
 use amethyst::renderer::{
     Camera, ImageFormat, SpriteRender, SpriteSheet, SpriteSheetFormat, Texture,
 };
+use amethyst::ui::FontHandle;
 use amethyst::ui::{Anchor, TtfFormat, UiText, UiTransform};
 
 /// The "paused" `State`.
-#[derive(Default)]
 pub struct Pause {
     text: Option<Entity>,
+    font: FontHandle,
+}
+
+impl Pause {
+    fn new(font: FontHandle) -> Pause {
+        Pause { text: None, font }
+    }
 }
 
 impl SimpleState for Pause {
     fn on_start(&mut self, data: StateData<GameData>) {
         let world = data.world;
-        let entity = initialize_pause_message(world);
+        let entity = initialize_pause_message(world, self.font.clone());
         self.text.replace(entity);
     }
 
@@ -46,6 +53,7 @@ impl SimpleState for Pause {
 pub struct Pong<'a, 'b> {
     sprite_sheet: Option<Handle<SpriteSheet>>,
     dispatcher: Option<Dispatcher<'a, 'b>>,
+    font: Option<FontHandle>,
 }
 
 impl<'a, 'b> SimpleState for Pong<'a, 'b> {
@@ -73,12 +81,21 @@ impl<'a, 'b> SimpleState for Pong<'a, 'b> {
         let sprite_sheet_handle = load_sprite_sheet(world);
         self.sprite_sheet.replace(sprite_sheet_handle);
 
+        // Read the font.
+        let font: FontHandle = world.read_resource::<Loader>().load(
+            "font/square.ttf",
+            TtfFormat,
+            (),
+            &world.read_resource(),
+        );
+        self.font.replace(font);
+
         // Create all entities.
         initialize_paddles(world, self.sprite_sheet.clone().unwrap());
         initialize_camera(world);
-        initialize_scoreboard(world);
+        initialize_scoreboard(world, self.font.clone().unwrap());
         initialize_ball(world, self.sprite_sheet.clone().unwrap());
-        initialize_messages(world);
+        initialize_messages(world, self.font.clone().unwrap());
         audio::initialize_audio(world);
     }
 
@@ -93,9 +110,10 @@ impl<'a, 'b> SimpleState for Pong<'a, 'b> {
     fn handle_event(&mut self, _: StateData<GameData>, event: StateEvent) -> SimpleTrans {
         match event {
             StateEvent::Input(InputEvent::ActionPressed(a)) if a == "quit" => Trans::Quit,
-            StateEvent::Input(InputEvent::ActionPressed(a)) if a == "pause" => {
-                Trans::Push(Box::new(Pause::default()))
-            }
+            StateEvent::Input(InputEvent::ActionPressed(a)) if a == "pause" => match &self.font {
+                Some(font) => Trans::Push(Box::new(Pause::new(font.clone()))),
+                _ => Trans::None,
+            },
             _ => Trans::None,
         }
     }
@@ -168,14 +186,7 @@ fn initialize_ball(world: &mut World, sprite_sheet: Handle<SpriteSheet>) {
         .build();
 }
 
-fn initialize_pause_message(world: &mut World) -> Entity {
-    let font = world.read_resource::<Loader>().load(
-        "font/square.ttf",
-        TtfFormat,
-        (),
-        &world.read_resource(),
-    );
-
+fn initialize_pause_message(world: &mut World, font: FontHandle) -> Entity {
     let transform = UiTransform::new(
         "Paused".to_string(),
         Anchor::Middle,
@@ -199,14 +210,7 @@ fn initialize_pause_message(world: &mut World) -> Entity {
         .build()
 }
 
-fn initialize_messages(world: &mut World) {
-    let font = world.read_resource::<Loader>().load(
-        "font/square.ttf",
-        TtfFormat,
-        (),
-        &world.read_resource(),
-    );
-
+fn initialize_messages(world: &mut World, font: FontHandle) {
     let transform = UiTransform::new(
         "Service".to_string(),
         Anchor::BottomMiddle,
@@ -232,14 +236,7 @@ fn initialize_messages(world: &mut World) {
     world.insert(ServeText(text));
 }
 
-fn initialize_scoreboard(world: &mut World) {
-    let font = world.read_resource::<Loader>().load(
-        "font/square.ttf",
-        TtfFormat,
-        (),
-        &world.read_resource(),
-    );
-
+fn initialize_scoreboard(world: &mut World, font: FontHandle) {
     let p1_transform = UiTransform::new(
         "P1".to_string(),
         Anchor::TopMiddle,
