@@ -142,7 +142,7 @@ impl<'a, 'b> SimpleState for Pong<'a, 'b> {
             StateEvent::Input(InputEvent::ActionPressed(a)) if a == "pause" => self
                 .font
                 .as_ref()
-                .map(|font| Trans::Push(Box::new(GameOver { font: font.clone() })))
+                .map(|font| Trans::Push(Box::new(Pause::new(font.clone()))))
                 .unwrap_or(Trans::None),
             // TODO Remove later.
             StateEvent::Input(InputEvent::KeyTyped('z')) => self
