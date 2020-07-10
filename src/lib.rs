@@ -123,8 +123,9 @@ impl<'a, 'b> SimpleState for Pong<'a, 'b> {
             let score_board = data.world.read_resource::<ScoreBoard>();
 
             if score_board.score_left >= 10 || score_board.score_right >= 10 {
-                let font = self.font.clone().unwrap();
-                return Trans::Push(Box::new(GameOver { font }));
+                if let Some(font) = &self.font {
+                    return Trans::Push(Box::new(GameOver { font: font.clone() }));
+                }
             }
         }
 
@@ -138,15 +139,17 @@ impl<'a, 'b> SimpleState for Pong<'a, 'b> {
     fn handle_event(&mut self, _: StateData<GameData>, event: StateEvent) -> SimpleTrans {
         match event {
             StateEvent::Input(InputEvent::ActionPressed(a)) if a == "quit" => Trans::Quit,
-            StateEvent::Input(InputEvent::ActionPressed(a)) if a == "pause" => match &self.font {
-                Some(font) => Trans::Push(Box::new(Pause::new(font.clone()))),
-                _ => Trans::None,
-            },
+            StateEvent::Input(InputEvent::ActionPressed(a)) if a == "pause" => self
+                .font
+                .as_ref()
+                .map(|font| Trans::Push(Box::new(GameOver { font: font.clone() })))
+                .unwrap_or(Trans::None),
             // TODO Remove later.
-            StateEvent::Input(InputEvent::KeyTyped('z')) => {
-                let font = self.font.clone().unwrap();
-                Trans::Push(Box::new(GameOver { font }))
-            }
+            StateEvent::Input(InputEvent::KeyTyped('z')) => self
+                .font
+                .as_ref()
+                .map(|font| Trans::Push(Box::new(GameOver { font: font.clone() })))
+                .unwrap_or(Trans::None),
             _ => Trans::None,
         }
     }
