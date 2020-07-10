@@ -6,7 +6,7 @@ use crate::core::*;
 use amethyst::assets::{AssetStorage, Handle, Loader};
 use amethyst::core::transform::Transform;
 use amethyst::core::ArcThreadPool;
-use amethyst::ecs::{Dispatcher, DispatcherBuilder};
+use amethyst::ecs::{Dispatcher, DispatcherBuilder, Entity};
 use amethyst::input::InputEvent;
 use amethyst::prelude::*;
 use amethyst::renderer::{
@@ -14,15 +14,26 @@ use amethyst::renderer::{
 };
 use amethyst::ui::{Anchor, TtfFormat, UiText, UiTransform};
 
-/// Pause the game.
-pub struct Pause;
+/// The "paused" `State`.
+#[derive(Default)]
+pub struct Pause {
+    text: Option<Entity>,
+}
 
 impl SimpleState for Pause {
-    fn handle_event(&mut self, _: StateData<GameData>, event: StateEvent) -> SimpleTrans {
+    fn on_start(&mut self, data: StateData<GameData>) {
+        let world = data.world;
+        let entity = initialize_pause_message(world);
+        self.text.replace(entity);
+    }
+
+    fn handle_event(&mut self, data: StateData<GameData>, event: StateEvent) -> SimpleTrans {
         match event {
             StateEvent::Input(InputEvent::ActionPressed(a)) if a == "quit" => Trans::Quit,
             StateEvent::Input(InputEvent::ActionPressed(a)) if a == "pause" => {
-                println!("Unpaused.");
+                self.text.take().iter_mut().for_each(|entity| {
+                    let _ = data.world.delete_entity(*entity);
+                });
                 Trans::Pop
             }
             _ => Trans::None,
@@ -30,7 +41,7 @@ impl SimpleState for Pause {
     }
 }
 
-/// The main game state.
+/// The main game `State`.
 #[derive(Default)]
 pub struct Pong<'a, 'b> {
     sprite_sheet: Option<Handle<SpriteSheet>>,
@@ -83,8 +94,7 @@ impl<'a, 'b> SimpleState for Pong<'a, 'b> {
         match event {
             StateEvent::Input(InputEvent::ActionPressed(a)) if a == "quit" => Trans::Quit,
             StateEvent::Input(InputEvent::ActionPressed(a)) if a == "pause" => {
-                println!("Paused!");
-                Trans::Push(Box::new(Pause))
+                Trans::Push(Box::new(Pause::default()))
             }
             _ => Trans::None,
         }
@@ -156,6 +166,37 @@ fn initialize_ball(world: &mut World, sprite_sheet: Handle<SpriteSheet>) {
         .with(local_transform)
         .with(active)
         .build();
+}
+
+fn initialize_pause_message(world: &mut World) -> Entity {
+    let font = world.read_resource::<Loader>().load(
+        "font/square.ttf",
+        TtfFormat,
+        (),
+        &world.read_resource(),
+    );
+
+    let transform = UiTransform::new(
+        "Paused".to_string(),
+        Anchor::Middle,
+        Anchor::Middle,
+        0.0,
+        0.0,
+        1.0,
+        200.0,
+        50.0,
+    );
+
+    world
+        .create_entity()
+        .with(transform)
+        .with(UiText::new(
+            font,
+            "Paused".to_string(),
+            [1.0, 1.0, 1.0, 1.0],
+            50.0,
+        ))
+        .build()
 }
 
 fn initialize_messages(world: &mut World) {
