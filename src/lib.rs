@@ -20,7 +20,6 @@ pub struct GameOver {
 
 impl SimpleState for GameOver {
     fn on_start(&mut self, data: StateData<GameData>) {
-        println!("Game over!");
         generic_message(data.world, self.font.clone(), Anchor::Middle, "Game Over");
     }
 
@@ -143,6 +142,11 @@ impl<'a, 'b> SimpleState for Pong<'a, 'b> {
                 Some(font) => Trans::Push(Box::new(Pause::new(font.clone()))),
                 _ => Trans::None,
             },
+            // TODO Remove later.
+            StateEvent::Input(InputEvent::KeyTyped('z')) => {
+                let font = self.font.clone().unwrap();
+                Trans::Push(Box::new(GameOver { font }))
+            }
             _ => Trans::None,
         }
     }
