@@ -70,6 +70,7 @@ pub struct Pong<'a, 'b> {
     sprite_sheet: Option<Handle<SpriteSheet>>,
     dispatcher: Option<Dispatcher<'a, 'b>>,
     font: Option<FontHandle>,
+    entities: Vec<Entity>,
 }
 
 impl<'a, 'b> SimpleState for Pong<'a, 'b> {
@@ -107,12 +108,19 @@ impl<'a, 'b> SimpleState for Pong<'a, 'b> {
         self.font.replace(font);
 
         // Create all entities.
-        initialize_paddles(world, self.sprite_sheet.clone().unwrap());
+        let (left, right) = initialize_paddles(world, self.sprite_sheet.clone().unwrap());
         initialize_camera(world);
         initialize_scoreboard(world, self.font.clone().unwrap());
         initialize_ball(world, self.sprite_sheet.clone().unwrap());
         initialize_messages(world, self.font.clone().unwrap());
         audio::initialize_audio(world);
+        let entities = vec![left, right];
+        self.entities = entities;
+    }
+
+    fn on_stop(&mut self, data: StateData<GameData>) {
+        // This state will never be used again, so we remove all of its entities.
+        let _ = data.world.delete_entities(&self.entities);
     }
 
     fn update(&mut self, data: &mut StateData<GameData>) -> SimpleTrans {
@@ -124,7 +132,7 @@ impl<'a, 'b> SimpleState for Pong<'a, 'b> {
 
             if score_board.score_left >= 10 || score_board.score_right >= 10 {
                 if let Some(font) = &self.font {
-                    return Trans::Push(Box::new(GameOver { font: font.clone() }));
+                    return Trans::Replace(Box::new(GameOver { font: font.clone() }));
                 }
             }
         }
@@ -148,7 +156,7 @@ impl<'a, 'b> SimpleState for Pong<'a, 'b> {
             StateEvent::Input(InputEvent::KeyTyped('z')) => self
                 .font
                 .as_ref()
-                .map(|font| Trans::Push(Box::new(GameOver { font: font.clone() })))
+                .map(|font| Trans::Replace(Box::new(GameOver { font: font.clone() })))
                 .unwrap_or(Trans::None),
             _ => Trans::None,
         }
@@ -166,7 +174,7 @@ fn initialize_camera(world: &mut World) {
         .build();
 }
 
-fn initialize_paddles(world: &mut World, sprite_sheet: Handle<SpriteSheet>) {
+fn initialize_paddles(world: &mut World, sprite_sheet: Handle<SpriteSheet>) -> (Entity, Entity) {
     let mut left_transform = Transform::default();
     let mut right_transform = Transform::default();
 
@@ -180,19 +188,21 @@ fn initialize_paddles(world: &mut World, sprite_sheet: Handle<SpriteSheet>) {
         sprite_number: 0,
     };
 
-    world
+    let left = world
         .create_entity()
         .with(sprite_render.clone())
         .with(Paddle::new(Side::Left))
         .with(left_transform)
         .build();
 
-    world
+    let right = world
         .create_entity()
         .with(sprite_render)
         .with(Paddle::new(Side::Right))
         .with(right_transform)
         .build();
+
+    (left, right)
 }
 
 fn initialize_ball(world: &mut World, sprite_sheet: Handle<SpriteSheet>) {
