@@ -15,6 +15,50 @@ use amethyst::renderer::{
 };
 use amethyst::ui::{Anchor, FontHandle, TtfFormat, UiText, UiTransform};
 
+/// The initial landing screen.
+#[derive(Default)]
+pub struct Welcome {
+    font: Option<FontHandle>,
+    entities: Vec<Entity>,
+}
+
+impl SimpleState for Welcome {
+    fn on_start(&mut self, data: StateData<GameData>) {
+        let world = data.world;
+
+        // Read the font.
+        let font: FontHandle = world.read_resource::<Loader>().load(
+            "font/square.ttf",
+            TtfFormat,
+            (),
+            &world.read_resource(),
+        );
+        self.font.replace(font);
+
+        // Show logo.
+        let text = generic_message(world, self.font.clone().unwrap(), Anchor::Middle, "Pong");
+        self.entities = vec![text];
+
+        initialize_camera(world);
+        audio::initialize_audio(world);
+    }
+
+    fn on_stop(&mut self, data: StateData<GameData>) {
+        let _ = data.world.delete_entities(&self.entities);
+    }
+
+    fn handle_event(&mut self, _: StateData<GameData>, event: StateEvent) -> SimpleTrans {
+        match event {
+            StateEvent::Input(InputEvent::KeyPressed { .. }) => self
+                .font
+                .as_ref()
+                .map(|font| Trans::Replace(Box::new(Pong::new(font.clone()))))
+                .unwrap_or(Trans::None),
+            _ => Trans::None,
+        }
+    }
+}
+
 pub struct GameOver {
     font: FontHandle,
 }
@@ -69,12 +113,22 @@ impl SimpleState for Pause {
 }
 
 /// The main game `State`.
-#[derive(Default)]
 pub struct Pong<'a, 'b> {
     sprite_sheet: Option<Handle<SpriteSheet>>,
     dispatcher: Option<Dispatcher<'a, 'b>>,
-    font: Option<FontHandle>,
+    font: FontHandle,
     entities: Vec<Entity>,
+}
+
+impl<'a, 'b> Pong<'a, 'b> {
+    pub fn new(font: FontHandle) -> Pong<'a, 'b> {
+        Pong {
+            sprite_sheet: None,
+            dispatcher: None,
+            font,
+            entities: vec![],
+        }
+    }
 }
 
 impl<'a, 'b> SimpleState for Pong<'a, 'b> {
@@ -102,22 +156,11 @@ impl<'a, 'b> SimpleState for Pong<'a, 'b> {
         let sprite_sheet_handle = load_sprite_sheet(world);
         self.sprite_sheet.replace(sprite_sheet_handle);
 
-        // Read the font.
-        let font: FontHandle = world.read_resource::<Loader>().load(
-            "font/square.ttf",
-            TtfFormat,
-            (),
-            &world.read_resource(),
-        );
-        self.font.replace(font);
-
         // Create all entities.
         let (left, right) = initialize_paddles(world, self.sprite_sheet.clone().unwrap());
-        initialize_camera(world);
-        initialize_scoreboard(world, self.font.clone().unwrap());
+        initialize_scoreboard(world, self.font.clone());
         let ball = initialize_ball(world, self.sprite_sheet.clone().unwrap());
-        let msg = initialize_messages(world, self.font.clone().unwrap());
-        audio::initialize_audio(world);
+        let msg = initialize_messages(world, self.font.clone());
         let entities = vec![left, right, ball, msg];
         self.entities = entities;
     }
@@ -135,9 +178,9 @@ impl<'a, 'b> SimpleState for Pong<'a, 'b> {
             let score_board = data.world.read_resource::<ScoreBoard>();
 
             if score_board.score_left >= 10 || score_board.score_right >= 10 {
-                if let Some(font) = &self.font {
-                    return Trans::Replace(Box::new(GameOver { font: font.clone() }));
-                }
+                return Trans::Replace(Box::new(GameOver {
+                    font: self.font.clone(),
+                }));
             }
         }
 
@@ -151,17 +194,13 @@ impl<'a, 'b> SimpleState for Pong<'a, 'b> {
     fn handle_event(&mut self, _: StateData<GameData>, event: StateEvent) -> SimpleTrans {
         match event {
             StateEvent::Input(InputEvent::ActionPressed(a)) if a == "quit" => Trans::Quit,
-            StateEvent::Input(InputEvent::ActionPressed(a)) if a == "pause" => self
-                .font
-                .as_ref()
-                .map(|font| Trans::Push(Box::new(Pause::new(font.clone()))))
-                .unwrap_or(Trans::None),
+            StateEvent::Input(InputEvent::ActionPressed(a)) if a == "pause" => {
+                Trans::Push(Box::new(Pause::new(self.font.clone())))
+            }
             // TODO Remove later.
-            StateEvent::Input(InputEvent::KeyTyped('z')) => self
-                .font
-                .as_ref()
-                .map(|font| Trans::Replace(Box::new(GameOver { font: font.clone() })))
-                .unwrap_or(Trans::None),
+            StateEvent::Input(InputEvent::KeyTyped('z')) => Trans::Replace(Box::new(GameOver {
+                font: self.font.clone(),
+            })),
             _ => Trans::None,
         }
     }
