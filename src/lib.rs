@@ -4,6 +4,7 @@ pub mod systems;
 
 use crate::core::*;
 use amethyst::assets::{AssetStorage, Handle, Loader};
+use amethyst::audio::AudioSink;
 use amethyst::core::transform::Transform;
 use amethyst::core::ArcThreadPool;
 use amethyst::ecs::{Dispatcher, DispatcherBuilder, Entity};
@@ -48,19 +49,22 @@ impl SimpleState for Pause {
         let world = data.world;
         let entity = initialize_pause_message(world, self.font.clone());
         self.text.replace(entity);
+        world.read_resource::<AudioSink>().pause();
     }
 
-    fn handle_event(&mut self, data: StateData<GameData>, event: StateEvent) -> SimpleTrans {
+    fn handle_event(&mut self, _: StateData<GameData>, event: StateEvent) -> SimpleTrans {
         match event {
             StateEvent::Input(InputEvent::ActionPressed(a)) if a == "quit" => Trans::Quit,
-            StateEvent::Input(InputEvent::ActionPressed(a)) if a == "pause" => {
-                self.text.take().iter_mut().for_each(|entity| {
-                    let _ = data.world.delete_entity(*entity);
-                });
-                Trans::Pop
-            }
+            StateEvent::Input(InputEvent::ActionPressed(a)) if a == "pause" => Trans::Pop,
             _ => Trans::None,
         }
+    }
+
+    fn on_stop(&mut self, data: StateData<GameData>) {
+        data.world.read_resource::<AudioSink>().play();
+        self.text.take().iter_mut().for_each(|entity| {
+            let _ = data.world.delete_entity(*entity);
+        });
     }
 }
 
@@ -111,10 +115,10 @@ impl<'a, 'b> SimpleState for Pong<'a, 'b> {
         let (left, right) = initialize_paddles(world, self.sprite_sheet.clone().unwrap());
         initialize_camera(world);
         initialize_scoreboard(world, self.font.clone().unwrap());
-        initialize_ball(world, self.sprite_sheet.clone().unwrap());
-        initialize_messages(world, self.font.clone().unwrap());
+        let ball = initialize_ball(world, self.sprite_sheet.clone().unwrap());
+        let msg = initialize_messages(world, self.font.clone().unwrap());
         audio::initialize_audio(world);
-        let entities = vec![left, right];
+        let entities = vec![left, right, ball, msg];
         self.entities = entities;
     }
 
@@ -205,7 +209,7 @@ fn initialize_paddles(world: &mut World, sprite_sheet: Handle<SpriteSheet>) -> (
     (left, right)
 }
 
-fn initialize_ball(world: &mut World, sprite_sheet: Handle<SpriteSheet>) {
+fn initialize_ball(world: &mut World, sprite_sheet: Handle<SpriteSheet>) -> Entity {
     let mut local_transform = Transform::default();
     local_transform.set_translation_xyz(ARENA_WIDTH / 2.0, ARENA_HEIGHT / 2.0, 0.0);
 
@@ -229,7 +233,7 @@ fn initialize_ball(world: &mut World, sprite_sheet: Handle<SpriteSheet>) {
         .with(ball)
         .with(local_transform)
         .with(active)
-        .build();
+        .build()
 }
 
 fn generic_message(world: &mut World, font: FontHandle, anchor: Anchor, msg: &str) -> Entity {
@@ -248,9 +252,10 @@ fn initialize_pause_message(world: &mut World, font: FontHandle) -> Entity {
     generic_message(world, font, Anchor::Middle, "Paused")
 }
 
-fn initialize_messages(world: &mut World, font: FontHandle) {
+fn initialize_messages(world: &mut World, font: FontHandle) -> Entity {
     let text = generic_message(world, font, Anchor::BottomMiddle, "Service!");
     world.insert(ServeText(text));
+    text
 }
 
 fn initialize_scoreboard(world: &mut World, font: FontHandle) {
@@ -298,6 +303,7 @@ fn initialize_scoreboard(world: &mut World, font: FontHandle) {
         ))
         .build();
 
+    // TODO Why is this insert necessary?
     world.insert(ScoreText { p1_score, p2_score });
 }
 
