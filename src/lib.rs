@@ -292,7 +292,7 @@ fn initialize_pause_message(world: &mut World, font: FontHandle) -> Entity {
 }
 
 fn initialize_messages(world: &mut World, font: FontHandle) -> Entity {
-    let text = generic_message(world, font, Anchor::BottomMiddle, "Service!");
+    let text = generic_message(world, font, Anchor::BottomMiddle, "Ready?");
     world.insert(ServeText(text));
     text
 }

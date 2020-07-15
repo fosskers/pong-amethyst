@@ -31,7 +31,7 @@ pub struct ScoreText {
     pub p2_score: Entity,
 }
 
-/// The "Service!" message before the ball begins to move.
+/// The "Ready?" message before the ball begins to move.
 pub struct ServeText(pub Entity);
 
 pub struct Ball {
