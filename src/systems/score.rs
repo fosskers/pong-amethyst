@@ -1,5 +1,5 @@
 use crate::audio;
-use crate::core::{Active, Ball, ScoreBoard, ScoreText, ServeText, ARENA_WIDTH};
+use crate::core::{Active, Ball, ScoreBoard, ScoreText, ServeText, ARENA_WIDTH, BALL_VELOCITY_X};
 use amethyst::assets::AssetStorage;
 use amethyst::audio::output::Output;
 use amethyst::audio::Source;
@@ -66,6 +66,13 @@ impl<'s> System<'s> for ScoreSystem {
 
             if did_hit {
                 let output = audio_output.as_ref().map(|o| o.deref());
+
+                if ball.velocity[0] < 0.0 {
+                    ball.velocity[0] = BALL_VELOCITY_X;
+                } else {
+                    ball.velocity[0] = -BALL_VELOCITY_X;
+                }
+
                 ball.velocity[0] *= -1.0;
                 transform.set_translation_x(ARENA_WIDTH / 2.0);
                 audio::play_score_sound(&sounds, &storage, output);

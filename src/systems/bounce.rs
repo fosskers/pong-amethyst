@@ -38,7 +38,7 @@ impl<'s> System<'s> for BounceSystem {
 
             // Bounce off the paddles.
             for (paddle, paddle_transform) in (&paddles, &transforms).join() {
-                // Bottom corner of the paddle.
+                // Location of the bottom corner of the paddle.
                 let paddle_x = paddle_transform.translation().x - (paddle.width * 0.5);
                 let paddle_y = paddle_transform.translation().y - (paddle.height * 0.5);
 
@@ -52,11 +52,11 @@ impl<'s> System<'s> for BounceSystem {
                 ) {
                     match paddle.side {
                         Side::Left if ball.velocity[0] < 0.0 => {
-                            ball.velocity[0] *= -1.0;
+                            ball.velocity[0] *= -1.05;
                             audio::play_bounce_sound(&sounds, &storage, output);
                         }
                         Side::Right if ball.velocity[0] > 0.0 => {
-                            ball.velocity[0] *= -1.0;
+                            ball.velocity[0] *= -1.05;
                             audio::play_bounce_sound(&sounds, &storage, output);
                         }
                         _ => (),
