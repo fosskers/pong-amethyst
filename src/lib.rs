@@ -36,8 +36,21 @@ impl SimpleState for Welcome {
         self.font.replace(font);
 
         // Show logo.
-        let text = generic_message(world, self.font.clone().unwrap(), Anchor::Middle, "Pong");
-        self.entities = vec![text];
+        let title = generic_message(
+            world,
+            self.font.clone().unwrap(),
+            Anchor::Middle,
+            "Pong",
+            Some(75.0),
+        );
+        let instructions = generic_message(
+            world,
+            self.font.clone().unwrap(),
+            Anchor::BottomMiddle,
+            "Esc to Pause, Q to Quit",
+            Some(25.0),
+        );
+        self.entities = vec![title, instructions];
 
         initialize_camera(world);
         audio::initialize_audio(world);
@@ -65,7 +78,13 @@ pub struct GameOver {
 
 impl SimpleState for GameOver {
     fn on_start(&mut self, data: StateData<GameData>) {
-        generic_message(data.world, self.font.clone(), Anchor::Middle, "Game Over");
+        generic_message(
+            data.world,
+            self.font.clone(),
+            Anchor::Middle,
+            "Game Over",
+            None,
+        );
     }
 
     fn handle_event(&mut self, _: StateData<GameData>, event: StateEvent) -> SimpleTrans {
@@ -275,24 +294,31 @@ fn initialize_ball(world: &mut World, sprite_sheet: Handle<SpriteSheet>) -> Enti
         .build()
 }
 
-fn generic_message(world: &mut World, font: FontHandle, anchor: Anchor, msg: &str) -> Entity {
+fn generic_message(
+    world: &mut World,
+    font: FontHandle,
+    anchor: Anchor,
+    msg: &str,
+    size: Option<f32>,
+) -> Entity {
     let m1 = msg.to_string();
     let m2 = msg.to_string();
-    let transform = UiTransform::new(m1, anchor, anchor, 0.0, 0.0, 1.0, 300.0, 50.0);
+    let text_size = size.unwrap_or(50.0);
+    let transform = UiTransform::new(m1, anchor, anchor, 0.0, 0.0, 1.0, 300.0, text_size);
 
     world
         .create_entity()
         .with(transform)
-        .with(UiText::new(font, m2, [1.0, 1.0, 1.0, 1.0], 50.0))
+        .with(UiText::new(font, m2, [1.0, 1.0, 1.0, 1.0], text_size))
         .build()
 }
 
 fn initialize_pause_message(world: &mut World, font: FontHandle) -> Entity {
-    generic_message(world, font, Anchor::Middle, "Paused")
+    generic_message(world, font, Anchor::Middle, "Paused", None)
 }
 
 fn initialize_messages(world: &mut World, font: FontHandle) -> Entity {
-    let text = generic_message(world, font, Anchor::BottomMiddle, "Ready?");
+    let text = generic_message(world, font, Anchor::BottomMiddle, "Ready?", None);
     world.insert(ServeText(text));
     text
 }
