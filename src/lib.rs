@@ -35,14 +35,6 @@ impl SimpleState for Welcome {
         );
         self.font.replace(font);
 
-        // Show logo.
-        let title = generic_message(
-            world,
-            self.font.clone().unwrap(),
-            Anchor::Middle,
-            "Pong",
-            Some(75.0),
-        );
         let instructions = generic_message(
             world,
             self.font.clone().unwrap(),
@@ -50,7 +42,8 @@ impl SimpleState for Welcome {
             "Esc to Pause, Q to Quit",
             Some(25.0),
         );
-        self.entities = vec![title, instructions];
+        let logo = initialize_logo(world);
+        self.entities = vec![instructions, logo];
 
         initialize_camera(world);
         audio::initialize_audio(world);
@@ -370,6 +363,42 @@ fn initialize_scoreboard(world: &mut World, font: FontHandle) {
 
     // TODO Why is this insert necessary?
     world.insert(ScoreText { p1_score, p2_score });
+}
+
+fn initialize_logo(world: &mut World) -> Entity {
+    let sprite_render = {
+        let loader = world.read_resource::<Loader>();
+        let texture_storage = world.read_resource::<AssetStorage<Texture>>();
+        let sprite_sheet_storage = world.read_resource::<AssetStorage<SpriteSheet>>();
+
+        let texture_handle = loader.load(
+            "texture/logo.png",
+            ImageFormat::default(),
+            (),
+            &texture_storage,
+        );
+
+        let sprite_sheet = loader.load(
+            "texture/logo.ron",
+            SpriteSheetFormat(texture_handle),
+            (),
+            &sprite_sheet_storage,
+        );
+
+        SpriteRender {
+            sprite_sheet,
+            sprite_number: 0,
+        }
+    };
+
+    let mut local_transform = Transform::default();
+    local_transform.set_translation_xyz(ARENA_WIDTH / 2.0, ARENA_HEIGHT / 2.0, 0.0);
+
+    world
+        .create_entity()
+        .with(local_transform)
+        .with(sprite_render)
+        .build()
 }
 
 fn load_sprite_sheet(world: &mut World) -> Handle<SpriteSheet> {
