@@ -28,7 +28,7 @@ impl SimpleState for Welcome {
 
         // Read the font.
         let font: FontHandle = world.read_resource::<Loader>().load(
-            "font/square.ttf",
+            "font/arcade.ttf",
             TtfFormat,
             (),
             &world.read_resource(),
@@ -297,7 +297,16 @@ fn generic_message(
     let m1 = msg.to_string();
     let m2 = msg.to_string();
     let text_size = size.unwrap_or(50.0);
-    let transform = UiTransform::new(m1, anchor, anchor, 0.0, 0.0, 1.0, 300.0, text_size);
+    let transform = UiTransform::new(
+        m1,
+        anchor,
+        anchor,
+        0.0,
+        0.0,
+        1.0,
+        text_size * msg.chars().count() as f32,
+        text_size,
+    );
 
     world
         .create_entity()
