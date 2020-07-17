@@ -6,6 +6,7 @@ use amethyst::renderer::plugins::{RenderFlat2D, RenderToWindow};
 use amethyst::renderer::types::DefaultBackend;
 use amethyst::renderer::RenderingBundle;
 use amethyst::ui::{RenderUi, UiBundle};
+use amethyst::utils::fps_counter::FpsCounterBundle;
 use pong::audio::Music;
 
 fn main() -> amethyst::Result<()> {
@@ -30,6 +31,7 @@ fn main() -> amethyst::Result<()> {
         .with_bundle(input_bundle)?
         .with_bundle(UiBundle::<StringBindings>::new())?
         .with_bundle(AudioBundle::default())?
+        .with_bundle(FpsCounterBundle::default())?
         .with_system_desc(
             DjSystemDesc::new(|music: &mut Music| music.music.next()),
             "dj_system",

@@ -14,6 +14,7 @@ use amethyst::renderer::{
     Camera, ImageFormat, SpriteRender, SpriteSheet, SpriteSheetFormat, Texture,
 };
 use amethyst::ui::{Anchor, FontHandle, TtfFormat, UiText, UiTransform};
+use amethyst::utils::fps_counter::FpsCounter;
 
 /// The initial landing screen.
 #[derive(Default)]
@@ -65,6 +66,7 @@ impl SimpleState for Welcome {
     }
 }
 
+/// The final `State` before the game exits.
 pub struct GameOver {
     font: FontHandle,
 }
@@ -130,6 +132,7 @@ pub struct Pong<'a, 'b> {
     dispatcher: Option<Dispatcher<'a, 'b>>,
     font: FontHandle,
     entities: Vec<Entity>,
+    fps: Option<Entity>,
 }
 
 impl<'a, 'b> Pong<'a, 'b> {
@@ -139,6 +142,7 @@ impl<'a, 'b> Pong<'a, 'b> {
             dispatcher: None,
             font,
             entities: vec![],
+            fps: None,
         }
     }
 }
@@ -172,9 +176,11 @@ impl<'a, 'b> SimpleState for Pong<'a, 'b> {
         let (left, right) = initialize_paddles(world, self.sprite_sheet.clone().unwrap());
         initialize_scoreboard(world, self.font.clone());
         let ball = initialize_ball(world, self.sprite_sheet.clone().unwrap());
-        let msg = initialize_messages(world, self.font.clone());
-        let entities = vec![left, right, ball, msg];
+        let ready = initialize_ready_msg(world, self.font.clone());
+        let fps = initialize_fps(world, self.font.clone());
+        let entities = vec![left, right, ball, ready, fps];
         self.entities = entities;
+        self.fps = Some(fps);
     }
 
     fn on_stop(&mut self, data: StateData<GameData>) {
@@ -196,6 +202,17 @@ impl<'a, 'b> SimpleState for Pong<'a, 'b> {
             }
         }
 
+        // Update FPS. Similarly blocked off to avoid a panic involving
+        // borrowing the `UiText` resource.
+        {
+            let fps = data.world.read_resource::<FpsCounter>();
+            let mut ui_text = data.world.write_storage::<UiText>();
+            if let Some(text) = self.fps.and_then(|e| ui_text.get_mut(e)) {
+                text.text = format!("{:.0}", fps.sampled_fps());
+            }
+        }
+
+        // Run all `Systems` unique to this `State`.
         if let Some(dispatcher) = self.dispatcher.as_mut() {
             dispatcher.dispatch(&data.world);
         }
@@ -319,10 +336,18 @@ fn initialize_pause_message(world: &mut World, font: FontHandle) -> Entity {
     generic_message(world, font, Anchor::Middle, "Paused", None)
 }
 
-fn initialize_messages(world: &mut World, font: FontHandle) -> Entity {
+fn initialize_ready_msg(world: &mut World, font: FontHandle) -> Entity {
     let text = generic_message(world, font, Anchor::BottomMiddle, "Ready?", None);
     world.insert(ServeText(text));
     text
+}
+
+fn initialize_fps(world: &mut World, font: FontHandle) -> Entity {
+    let msg = {
+        let fps = world.read_resource::<FpsCounter>();
+        format!("{:.0}", fps.sampled_fps())
+    };
+    generic_message(world, font, Anchor::TopMiddle, &msg, Some(20.0))
 }
 
 fn initialize_scoreboard(world: &mut World, font: FontHandle) {
