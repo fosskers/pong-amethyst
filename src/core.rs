@@ -34,6 +34,9 @@ pub struct ScoreText {
 /// The "Ready?" message before the ball begins to move.
 pub struct ServeText(pub Entity);
 
+/// The FPS counter.
+pub struct FPS(pub Entity);
+
 pub struct Ball {
     pub velocity: [f32; 2],
     pub radius: f32,

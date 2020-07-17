@@ -161,6 +161,7 @@ impl<'a, 'b> SimpleState for Pong<'a, 'b> {
             &["paddle_system", "ball_system"],
         );
         builder.add(systems::ScoreSystem, "score_system", &["ball_system"]);
+        builder.add(systems::FpsSystem, "fps_system", &[]);
 
         let mut dispatcher = builder
             .with_pool((*world.read_resource::<ArcThreadPool>()).clone())
@@ -199,16 +200,6 @@ impl<'a, 'b> SimpleState for Pong<'a, 'b> {
                 return Trans::Replace(Box::new(GameOver {
                     font: self.font.clone(),
                 }));
-            }
-        }
-
-        // Update FPS. Similarly blocked off to avoid a panic involving
-        // borrowing the `UiText` resource.
-        {
-            let fps = data.world.read_resource::<FpsCounter>();
-            let mut ui_text = data.world.write_storage::<UiText>();
-            if let Some(text) = self.fps.and_then(|e| ui_text.get_mut(e)) {
-                text.text = format!("{:.0}", fps.sampled_fps());
             }
         }
 
@@ -347,7 +338,9 @@ fn initialize_fps(world: &mut World, font: FontHandle) -> Entity {
         let fps = world.read_resource::<FpsCounter>();
         format!("{:.0}", fps.sampled_fps())
     };
-    generic_message(world, font, Anchor::TopMiddle, &msg, Some(20.0))
+    let text = generic_message(world, font, Anchor::TopMiddle, &msg, Some(20.0));
+    world.insert(FPS(text));
+    text
 }
 
 fn initialize_scoreboard(world: &mut World, font: FontHandle) {
