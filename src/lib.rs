@@ -13,7 +13,10 @@ use amethyst::prelude::*;
 use amethyst::renderer::{
     Camera, ImageFormat, SpriteRender, SpriteSheet, SpriteSheetFormat, Texture,
 };
-use amethyst::ui::{Anchor, FontHandle, TtfFormat, UiText, UiTransform};
+use amethyst::ui::{
+    Anchor, FontHandle, LineMode, TtfFormat, UiButtonBuilder, UiEvent, UiEventType, UiImage,
+    UiText, UiTransform,
+};
 use amethyst::utils::fps_counter::FpsCounter;
 
 /// The initial landing screen.
@@ -36,6 +39,41 @@ impl SimpleState for Welcome {
         );
         self.font.replace(font);
 
+        let (crap, crapper) = {
+            let texture_storage = world.read_resource::<AssetStorage<Texture>>();
+            let crap = world.read_resource::<Loader>().load(
+                "texture/crap.png",
+                ImageFormat::default(),
+                (),
+                &texture_storage,
+            );
+            let crapper = world.read_resource::<Loader>().load(
+                "texture/crapper.png",
+                ImageFormat::default(),
+                (),
+                &texture_storage,
+            );
+            (crap, crapper)
+        };
+
+        // Start Button.
+        let (_, button) = UiButtonBuilder::<(), u32>::new("")
+            // .with_position(ARENA_WIDTH / 2.0, ARENA_HEIGHT / 2.0)
+            .with_anchor(Anchor::Middle)
+            // .with_image(UiImage::SolidColor([0.8, 0.6, 0.3, 1.0]))
+            .with_image(UiImage::Texture(crap))
+            // .with_position(0.0, 0.0)
+            // .with_font_size(25.0)
+            // .with_font(self.font.clone().unwrap())
+            // .with_size(25.0 * 14.0, 25.0)
+            // .with_text_color([1.0, 1.0, 1.0, 1.0])
+            // .with_hover_text_color([0.8, 0.6, 0.3, 1.0])
+            .with_hover_image(UiImage::Texture(crapper))
+            // .with_hover_image(UiImage::SolidColor([0.8, 0.6, 0.3, 1.0]))
+            // .with_press_image(UiImage::SolidColor([1.0, 1.0, 1.0, 1.0]))
+            .build_from_world(&world);
+
+        // Usage instructions.
         let instructions = generic_message(
             world,
             self.font.clone().unwrap(),
@@ -44,7 +82,7 @@ impl SimpleState for Welcome {
             Some(25.0),
         );
         let logo = initialize_logo(world);
-        self.entities = vec![instructions, logo];
+        self.entities = vec![instructions, logo, button.text_entity, button.image_entity];
 
         initialize_camera(world);
         audio::initialize_audio(world);
@@ -61,6 +99,13 @@ impl SimpleState for Welcome {
                 .as_ref()
                 .map(|font| Trans::Replace(Box::new(Pong::new(font.clone()))))
                 .unwrap_or(Trans::None),
+            StateEvent::Ui(UiEvent {
+                target,
+                event_type: UiEventType::Click,
+            }) => {
+                println!("[HANDLE_EVENT] {:?}", target);
+                Trans::None
+            }
             _ => Trans::None,
         }
     }
@@ -170,7 +215,7 @@ impl<'a, 'b> SimpleState for Pong<'a, 'b> {
         self.dispatcher = Some(dispatcher);
 
         // Set up the sprites.
-        let sprite_sheet_handle = load_sprite_sheet(world);
+        let sprite_sheet_handle = load_sprite_sheet(world, "pong_spritesheet");
         self.sprite_sheet.replace(sprite_sheet_handle);
 
         // Create all entities.
@@ -319,7 +364,14 @@ fn generic_message(
     world
         .create_entity()
         .with(transform)
-        .with(UiText::new(font, m2, [1.0, 1.0, 1.0, 1.0], text_size))
+        .with(UiText::new(
+            font,
+            m2,
+            [1.0, 1.0, 1.0, 1.0],
+            text_size,
+            LineMode::Single,
+            Anchor::Middle,
+        ))
         .build()
 }
 
@@ -374,6 +426,8 @@ fn initialize_scoreboard(world: &mut World, font: FontHandle) {
             "0".to_string(),
             [1.0, 1.0, 1.0, 1.0],
             50.0,
+            LineMode::Single,
+            Anchor::Middle,
         ))
         .build();
 
@@ -385,6 +439,8 @@ fn initialize_scoreboard(world: &mut World, font: FontHandle) {
             "0".to_string(),
             [1.0, 1.0, 1.0, 1.0],
             50.0,
+            LineMode::Single,
+            Anchor::Middle,
         ))
         .build();
 
@@ -398,14 +454,14 @@ fn initialize_logo(world: &mut World) -> Entity {
         let texture_storage = world.read_resource::<AssetStorage<Texture>>();
         let sprite_sheet_storage = world.read_resource::<AssetStorage<SpriteSheet>>();
 
-        let texture_handle = loader.load(
+        let texture_handle: Handle<Texture> = loader.load(
             "texture/logo.png",
             ImageFormat::default(),
             (),
             &texture_storage,
         );
 
-        let sprite_sheet = loader.load(
+        let sprite_sheet: Handle<SpriteSheet> = loader.load(
             "texture/logo.ron",
             SpriteSheetFormat(texture_handle),
             (),
@@ -418,8 +474,10 @@ fn initialize_logo(world: &mut World) -> Entity {
         }
     };
 
+    // TODO Fix up this position.
     let mut local_transform = Transform::default();
-    local_transform.set_translation_xyz(ARENA_WIDTH / 2.0, ARENA_HEIGHT / 2.0, 0.0);
+    // local_transform.set_translation_xyz(ARENA_WIDTH / 2.0, ARENA_HEIGHT / 2.0, 0.0);
+    local_transform.set_translation_xyz(ARENA_WIDTH / 2.0, ARENA_HEIGHT - 16.0, 0.0);
 
     world
         .create_entity()
@@ -428,20 +486,21 @@ fn initialize_logo(world: &mut World) -> Entity {
         .build()
 }
 
-fn load_sprite_sheet(world: &mut World) -> Handle<SpriteSheet> {
+/// Given the name of a texture png/ron pair, read its `SpriteSheet`.
+fn load_sprite_sheet(world: &mut World, path: &str) -> Handle<SpriteSheet> {
     let loader = world.read_resource::<Loader>();
     let texture_storage = world.read_resource::<AssetStorage<Texture>>();
     let sprite_sheet_storage = world.read_resource::<AssetStorage<SpriteSheet>>();
 
     let texture_handle = loader.load(
-        "texture/pong_spritesheet.png",
+        format!("texture/{}.png", path),
         ImageFormat::default(),
         (),
         &texture_storage,
     );
 
     loader.load(
-        "texture/pong_spritesheet.ron",
+        format!("texture/{}.ron", path),
         SpriteSheetFormat(texture_handle),
         (),
         &sprite_sheet_storage,
