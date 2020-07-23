@@ -1,3 +1,5 @@
+//! Core types and functions used across other modules.
+
 use amethyst::assets::{AssetStorage, Handle, Loader};
 use amethyst::core::transform::Transform;
 use amethyst::ecs::prelude::{Component, DenseVecStorage};

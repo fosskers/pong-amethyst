@@ -1,3 +1,5 @@
+//! Loading audio files and toggling music.
+
 use amethyst::assets::{AssetStorage, Loader};
 use amethyst::audio::output::Output;
 use amethyst::audio::{AudioSink, OggFormat, Source, SourceHandle};
