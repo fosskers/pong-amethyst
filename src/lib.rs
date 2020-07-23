@@ -39,21 +39,14 @@ impl SimpleState for Welcome {
         );
         self.font.replace(font);
 
-        let (crap, crapper) = {
-            let texture_storage = world.read_resource::<AssetStorage<Texture>>();
-            let crap = world.read_resource::<Loader>().load(
-                "texture/crap.png",
-                ImageFormat::default(),
-                (),
-                &texture_storage,
-            );
-            let crapper = world.read_resource::<Loader>().load(
-                "texture/crapper.png",
-                ImageFormat::default(),
-                (),
-                &texture_storage,
-            );
-            (crap, crapper)
+        let button_sheet = load_sprite_sheet(world, "button");
+        let unpressed_button = SpriteRender {
+            sprite_sheet: button_sheet.clone(),
+            sprite_number: 0,
+        };
+        let pressed_button = SpriteRender {
+            sprite_sheet: button_sheet,
+            sprite_number: 1,
         };
 
         // Start Button.
@@ -61,16 +54,17 @@ impl SimpleState for Welcome {
             // .with_position(ARENA_WIDTH / 2.0, ARENA_HEIGHT / 2.0)
             .with_anchor(Anchor::Middle)
             // .with_image(UiImage::SolidColor([0.8, 0.6, 0.3, 1.0]))
-            .with_image(UiImage::Texture(crap))
+            .with_image(UiImage::Sprite(unpressed_button))
             // .with_position(0.0, 0.0)
             // .with_font_size(25.0)
             // .with_font(self.font.clone().unwrap())
             // .with_size(25.0 * 14.0, 25.0)
             // .with_text_color([1.0, 1.0, 1.0, 1.0])
             // .with_hover_text_color([0.8, 0.6, 0.3, 1.0])
-            .with_hover_image(UiImage::Texture(crapper))
+            // .with_hover_image(UiImage::Texture(crapper))
             // .with_hover_image(UiImage::SolidColor([0.8, 0.6, 0.3, 1.0]))
             // .with_press_image(UiImage::SolidColor([1.0, 1.0, 1.0, 1.0]))
+            .with_press_image(UiImage::Sprite(pressed_button))
             .build_from_world(&world);
 
         // Usage instructions.
