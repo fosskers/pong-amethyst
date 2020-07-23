@@ -89,12 +89,7 @@ impl SimpleState for Welcome {
                 event_type: UiEventType::Click,
             }) if Some(target) == self.button => {
                 println!("[HANDLE_EVENT] You clicked the button!");
-                let sink = data.world.read_resource::<AudioSink>();
-                if sink.is_paused() {
-                    sink.play();
-                } else {
-                    sink.pause();
-                }
+                audio::toggle_bgm(data.world);
                 Trans::None
             }
             _ => Trans::None,

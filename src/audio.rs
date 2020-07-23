@@ -49,6 +49,16 @@ pub fn initialize_audio(world: &mut World) {
     world.insert(music);
 }
 
+/// Turn the background music on or off, depending on its current state.
+pub fn toggle_bgm(world: &mut World) {
+    let sink = world.read_resource::<AudioSink>();
+    if sink.is_paused() {
+        sink.play();
+    } else {
+        sink.pause();
+    }
+}
+
 pub fn play_bounce_sound(sounds: &Sounds, storage: &AssetStorage<Source>, output: Option<&Output>) {
     if let Some(o) = output {
         if let Some(sound) = storage.get(&sounds.bounce_sfx) {
