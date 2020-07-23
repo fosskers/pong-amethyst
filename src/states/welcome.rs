@@ -1,19 +1,18 @@
 use crate::audio;
 use crate::core::*;
-use crate::states::playing::Pong;
+use crate::states::settings::Settings;
 use amethyst::assets::{AssetStorage, Handle, Loader};
 use amethyst::core::transform::Transform;
 use amethyst::ecs::Entity;
 use amethyst::input::InputEvent;
 use amethyst::prelude::*;
 use amethyst::renderer::{ImageFormat, SpriteRender, SpriteSheet, SpriteSheetFormat, Texture};
-use amethyst::ui::{Anchor, FontHandle, TtfFormat, UiButtonBuilder, UiEvent, UiEventType, UiImage};
+use amethyst::ui::{FontHandle, TtfFormat};
 
 /// The initial landing screen.
 #[derive(Default)]
 pub struct Welcome {
     font: Option<FontHandle>, // TODO Put this in a global resource instead?
-    button: Option<Entity>,
     entities: Vec<Entity>,
 }
 
@@ -30,34 +29,8 @@ impl SimpleState for Welcome {
         );
         self.font.replace(font);
 
-        let button_sheet = load_sprite_sheet(world, "button");
-        let unpressed_button = SpriteRender {
-            sprite_sheet: button_sheet.clone(),
-            sprite_number: 0,
-        };
-        let pressed_button = SpriteRender {
-            sprite_sheet: button_sheet,
-            sprite_number: 1,
-        };
-
-        // Music Button.
-        let (_, button) = UiButtonBuilder::<(), u32>::new("")
-            .with_anchor(Anchor::Middle)
-            .with_image(UiImage::Sprite(unpressed_button))
-            .with_press_image(UiImage::Sprite(pressed_button))
-            .build_from_world(&world);
-        self.button.replace(button.image_entity);
-
-        // Usage instructions.
-        let instructions = generic_message(
-            world,
-            self.font.clone().unwrap(),
-            Anchor::BottomMiddle,
-            "Esc to Pause, Q to Quit",
-            Some(25.0),
-        );
         let logo = initialize_logo(world);
-        self.entities = vec![instructions, logo, button.text_entity, button.image_entity];
+        self.entities = vec![logo];
 
         initialize_camera(world);
         audio::initialize_audio(world);
@@ -67,21 +40,13 @@ impl SimpleState for Welcome {
         let _ = data.world.delete_entities(&self.entities);
     }
 
-    fn handle_event(&mut self, data: StateData<GameData>, event: StateEvent) -> SimpleTrans {
+    fn handle_event(&mut self, _: StateData<GameData>, event: StateEvent) -> SimpleTrans {
         match event {
             StateEvent::Input(InputEvent::KeyPressed { .. }) => self
                 .font
                 .as_ref()
-                .map(|font| Trans::Replace(Box::new(Pong::new(font.clone()))))
+                .map(|font| Trans::Replace(Box::new(Settings::new(font.clone()))))
                 .unwrap_or(Trans::None),
-            StateEvent::Ui(UiEvent {
-                target,
-                event_type: UiEventType::Click,
-            }) if Some(target) == self.button => {
-                println!("[HANDLE_EVENT] You clicked the button!");
-                audio::toggle_bgm(data.world);
-                Trans::None
-            }
             _ => Trans::None,
         }
     }
