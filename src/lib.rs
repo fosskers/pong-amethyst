@@ -23,6 +23,7 @@ use amethyst::utils::fps_counter::FpsCounter;
 #[derive(Default)]
 pub struct Welcome {
     font: Option<FontHandle>,
+    button: Option<Entity>,
     entities: Vec<Entity>,
 }
 
@@ -49,23 +50,13 @@ impl SimpleState for Welcome {
             sprite_number: 1,
         };
 
-        // Start Button.
+        // Music Button.
         let (_, button) = UiButtonBuilder::<(), u32>::new("")
-            // .with_position(ARENA_WIDTH / 2.0, ARENA_HEIGHT / 2.0)
             .with_anchor(Anchor::Middle)
-            // .with_image(UiImage::SolidColor([0.8, 0.6, 0.3, 1.0]))
             .with_image(UiImage::Sprite(unpressed_button))
-            // .with_position(0.0, 0.0)
-            // .with_font_size(25.0)
-            // .with_font(self.font.clone().unwrap())
-            // .with_size(25.0 * 14.0, 25.0)
-            // .with_text_color([1.0, 1.0, 1.0, 1.0])
-            // .with_hover_text_color([0.8, 0.6, 0.3, 1.0])
-            // .with_hover_image(UiImage::Texture(crapper))
-            // .with_hover_image(UiImage::SolidColor([0.8, 0.6, 0.3, 1.0]))
-            // .with_press_image(UiImage::SolidColor([1.0, 1.0, 1.0, 1.0]))
             .with_press_image(UiImage::Sprite(pressed_button))
             .build_from_world(&world);
+        self.button.replace(button.image_entity);
 
         // Usage instructions.
         let instructions = generic_message(
@@ -86,7 +77,7 @@ impl SimpleState for Welcome {
         let _ = data.world.delete_entities(&self.entities);
     }
 
-    fn handle_event(&mut self, _: StateData<GameData>, event: StateEvent) -> SimpleTrans {
+    fn handle_event(&mut self, data: StateData<GameData>, event: StateEvent) -> SimpleTrans {
         match event {
             StateEvent::Input(InputEvent::KeyPressed { .. }) => self
                 .font
@@ -96,8 +87,14 @@ impl SimpleState for Welcome {
             StateEvent::Ui(UiEvent {
                 target,
                 event_type: UiEventType::Click,
-            }) => {
-                println!("[HANDLE_EVENT] {:?}", target);
+            }) if Some(target) == self.button => {
+                println!("[HANDLE_EVENT] You clicked the button!");
+                let sink = data.world.read_resource::<AudioSink>();
+                if sink.is_paused() {
+                    sink.play();
+                } else {
+                    sink.pause();
+                }
                 Trans::None
             }
             _ => Trans::None,
