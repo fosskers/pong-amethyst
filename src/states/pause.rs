@@ -1,5 +1,4 @@
 use crate::core;
-use amethyst::audio::AudioSink;
 use amethyst::ecs::Entity;
 use amethyst::input::InputEvent;
 use amethyst::prelude::*;
@@ -22,7 +21,6 @@ impl SimpleState for Pause {
         let world = data.world;
         let entity = initialize_pause_message(world, self.font.clone());
         self.text.replace(entity);
-        world.read_resource::<AudioSink>().pause();
     }
 
     fn handle_event(&mut self, _: StateData<GameData>, event: StateEvent) -> SimpleTrans {
@@ -34,7 +32,6 @@ impl SimpleState for Pause {
     }
 
     fn on_stop(&mut self, data: StateData<GameData>) {
-        data.world.read_resource::<AudioSink>().play();
         self.text.take().iter_mut().for_each(|entity| {
             let _ = data.world.delete_entity(*entity);
         });

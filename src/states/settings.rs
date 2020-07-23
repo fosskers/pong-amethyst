@@ -45,6 +45,15 @@ impl SimpleState for Settings {
             .build_from_world(&world);
         self.button.replace(button.image_entity);
 
+        // Header text.
+        let header = core::generic_message(
+            world,
+            self.font.clone(),
+            Anchor::TopMiddle,
+            "Settings",
+            Some(50.0),
+        );
+
         // Usage instructions.
         let instructions = core::generic_message(
             world,
@@ -53,7 +62,12 @@ impl SimpleState for Settings {
             "Esc to Pause, Q to Quit",
             Some(25.0),
         );
-        self.entities = vec![instructions, button.text_entity, button.image_entity];
+        self.entities = vec![
+            header,
+            instructions,
+            button.text_entity,
+            button.image_entity,
+        ];
     }
 
     fn on_stop(&mut self, data: StateData<GameData>) {
