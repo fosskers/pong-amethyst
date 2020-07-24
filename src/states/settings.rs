@@ -1,13 +1,14 @@
 use crate::audio;
 use crate::core;
 use crate::states::playing::Pong;
-use amethyst::assets::Handle;
 use amethyst::ecs::Entity;
 use amethyst::input::InputEvent;
 use amethyst::prelude::*;
-use amethyst::renderer::{SpriteRender, Texture};
+use amethyst::renderer::SpriteRender;
 use amethyst::ui::*;
 
+/// A UI button that can be toggled, maintaining its up/down sprite until the
+/// next time it is clicked.
 struct Button {
     ui_button: UiButton,
     activation: UiButtonActionRetrigger,
@@ -82,17 +83,29 @@ impl SimpleState for Settings {
                 .map(|b| b.ui_button.image_entity == target)
                 .unwrap_or(false) =>
             {
-                // if let Some(button) = &self.button {
-                //     let mut storage = data.world.write_storage::<Handle<Texture>>();
-                //     let mut texture = button.ui_button.get_texture_mut(&mut storage);
-                //     *texture = button.unpressed;
-                // }
+                if let Some(button) = self.button.as_mut() {
+                    toggle_button(data.world, button);
+                }
                 println!("[HANDLE_EVENT] You clicked the button!");
                 audio::toggle_bgm(data.world);
                 Trans::None
             }
             _ => Trans::None,
         }
+    }
+}
+
+/// When a button is pressed, its preinstalled `UiButtonActionRetrigger` will
+/// run. Then, here, that retrigger is swapped so that the next time the button
+/// is pressed, a different effect will occur.
+fn toggle_button(world: &mut World, button: &mut Button) {
+    button.is_pressed = !button.is_pressed;
+    let mut storage = world.write_storage::<UiButtonActionRetrigger>();
+    storage.remove(button.ui_button.image_entity);
+    if button.is_pressed {
+        let _ = storage.insert(button.ui_button.image_entity, button.deactivation.clone());
+    } else {
+        let _ = storage.insert(button.ui_button.image_entity, button.activation.clone());
     }
 }
 
@@ -123,8 +136,6 @@ fn music_button(world: &mut World) -> Button {
         UiButtonActionType::UnsetTexture(UiImage::Sprite(unpressed_button)),
     );
     let _ = storage.insert(ui_button.image_entity, deactivation.clone());
-    // TODO Add/remove the `UiButtonActionRetrigger` component when the button
-    // is clicked! I can have two of them: each sets a different sprite.
 
     Button {
         ui_button: ui_button.clone(),
