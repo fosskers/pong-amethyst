@@ -10,8 +10,8 @@ use amethyst::ui::*;
 
 struct Button {
     ui_button: UiButton,
-    unpressed: SpriteRender,
-    pressed: SpriteRender,
+    activation: UiButtonActionRetrigger,
+    deactivation: UiButtonActionRetrigger,
     is_pressed: bool,
 }
 
@@ -109,28 +109,37 @@ fn music_button(world: &mut World) -> Button {
 
     let (_, ui_button) = UiButtonBuilder::<(), u32>::new("")
         .with_anchor(Anchor::Middle)
-        .with_image(UiImage::Sprite(pressed_button.clone()))
+        .with_image(UiImage::Sprite(pressed_button))
         .build_from_world(&world);
 
     // Register button reactions.
     let mut storage = world.write_storage::<UiButtonActionRetrigger>();
-    let retrigger = UiButtonActionRetrigger {
-        on_click_start: vec![],
-        on_click_stop: vec![UiButtonAction {
-            target: ui_button.image_entity,
-            event_type: UiButtonActionType::SetImage(UiImage::Sprite(unpressed_button.clone())),
-        }],
-        on_hover_start: vec![],
-        on_hover_stop: vec![],
-    };
-    let _ = storage.insert(ui_button.image_entity, retrigger);
+    let deactivation = retrigger(
+        ui_button.image_entity,
+        UiButtonActionType::SetImage(UiImage::Sprite(unpressed_button.clone())),
+    );
+    let activation = retrigger(
+        ui_button.image_entity,
+        UiButtonActionType::UnsetTexture(UiImage::Sprite(unpressed_button)),
+    );
+    let _ = storage.insert(ui_button.image_entity, deactivation.clone());
     // TODO Add/remove the `UiButtonActionRetrigger` component when the button
     // is clicked! I can have two of them: each sets a different sprite.
 
     Button {
         ui_button: ui_button.clone(),
-        unpressed: unpressed_button,
-        pressed: pressed_button,
+        activation,
+        deactivation,
         is_pressed: true,
+    }
+}
+
+fn retrigger(entity: Entity, event: UiButtonActionType) -> UiButtonActionRetrigger {
+    UiButtonActionRetrigger {
+        on_click_stop: vec![UiButtonAction {
+            target: entity,
+            event_type: event,
+        }],
+        ..Default::default()
     }
 }

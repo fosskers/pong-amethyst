@@ -6,8 +6,9 @@ edition = "2018"
 
 [dependencies.amethyst]
 version = "0.15"
-git = "https://github.com/amethyst/amethyst"
-rev = "2535a065fb34234a1e5b74c4da5717d1dcdce6ca"
+# git = "https://github.com/amethyst/amethyst"
+git = "https://github.com/fosskers/amethyst"
+rev = "41440b90c73fbab27f8190a799e06f18fa9ee9bd"
 default-features = false
 features = ["vulkan", "audio"]
 
