@@ -1,15 +1,23 @@
 use crate::audio;
 use crate::core;
 use crate::states::playing::Pong;
+use amethyst::assets::Handle;
 use amethyst::ecs::Entity;
 use amethyst::input::InputEvent;
 use amethyst::prelude::*;
-use amethyst::renderer::SpriteRender;
-use amethyst::ui::{Anchor, FontHandle, UiButtonBuilder, UiEvent, UiEventType, UiImage};
+use amethyst::renderer::{SpriteRender, Texture};
+use amethyst::ui::{Anchor, FontHandle, UiButton, UiButtonBuilder, UiEvent, UiEventType, UiImage};
+
+struct Button {
+    ui_button: UiButton,
+    unpressed: SpriteRender,
+    pressed: SpriteRender,
+    is_pressed: bool,
+}
 
 pub struct Settings {
     font: FontHandle, // TODO Put this in a global resource instead?
-    button: Option<Entity>,
+    button: Option<Button>,
     entities: Vec<Entity>,
 }
 
@@ -38,12 +46,26 @@ impl SimpleState for Settings {
         };
 
         // Music Button.
-        let (_, button) = UiButtonBuilder::<(), u32>::new("")
+        let (_, ui_button) = UiButtonBuilder::<(), u32>::new("")
             .with_anchor(Anchor::Middle)
-            .with_image(UiImage::Sprite(unpressed_button))
-            .with_press_image(UiImage::Sprite(pressed_button))
+            // .with_image(UiImage::Sprite(unpressed_button))
+            .with_image(UiImage::Sprite(pressed_button.clone()))
             .build_from_world(&world);
-        self.button.replace(button.image_entity);
+        let button = Button {
+            ui_button: ui_button.clone(),
+            unpressed: unpressed_button,
+            pressed: pressed_button,
+            is_pressed: true,
+        };
+        self.button.replace(button);
+
+        // TODO
+        // UiButtonActionRetrigger?
+        // UiButtonAction?
+        //
+        // UiButtonActionType has a `SetImage(UiImage)` variant.
+        //
+        // Or do I just `get_texture_mut`?
 
         // Header text.
         let header = core::generic_message(
@@ -65,8 +87,8 @@ impl SimpleState for Settings {
         self.entities = vec![
             header,
             instructions,
-            button.text_entity,
-            button.image_entity,
+            ui_button.text_entity,
+            ui_button.image_entity,
         ];
     }
 
@@ -82,7 +104,17 @@ impl SimpleState for Settings {
             StateEvent::Ui(UiEvent {
                 target,
                 event_type: UiEventType::Click,
-            }) if Some(target) == self.button => {
+            }) if self
+                .button
+                .as_ref()
+                .map(|b| b.ui_button.image_entity == target)
+                .unwrap_or(false) =>
+            {
+                // if let Some(button) = &self.button {
+                //     let mut storage = data.world.write_storage::<Handle<Texture>>();
+                //     let mut texture = button.ui_button.get_texture_mut(&mut storage);
+                //     *texture = button.unpressed;
+                // }
                 println!("[HANDLE_EVENT] You clicked the button!");
                 audio::toggle_bgm(data.world);
                 Trans::None
