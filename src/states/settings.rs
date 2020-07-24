@@ -6,7 +6,7 @@ use amethyst::ecs::Entity;
 use amethyst::input::InputEvent;
 use amethyst::prelude::*;
 use amethyst::renderer::{SpriteRender, Texture};
-use amethyst::ui::{Anchor, FontHandle, UiButton, UiButtonBuilder, UiEvent, UiEventType, UiImage};
+use amethyst::ui::*;
 
 struct Button {
     ui_button: UiButton,
@@ -34,38 +34,7 @@ impl Settings {
 impl SimpleState for Settings {
     fn on_start(&mut self, data: StateData<GameData>) {
         let world = data.world;
-
-        let button_sheet = core::load_sprite_sheet(world, "button");
-        let unpressed_button = SpriteRender {
-            sprite_sheet: button_sheet.clone(),
-            sprite_number: 0,
-        };
-        let pressed_button = SpriteRender {
-            sprite_sheet: button_sheet,
-            sprite_number: 1,
-        };
-
-        // Music Button.
-        let (_, ui_button) = UiButtonBuilder::<(), u32>::new("")
-            .with_anchor(Anchor::Middle)
-            // .with_image(UiImage::Sprite(unpressed_button))
-            .with_image(UiImage::Sprite(pressed_button.clone()))
-            .build_from_world(&world);
-        let button = Button {
-            ui_button: ui_button.clone(),
-            unpressed: unpressed_button,
-            pressed: pressed_button,
-            is_pressed: true,
-        };
-        self.button.replace(button);
-
-        // TODO
-        // UiButtonActionRetrigger?
-        // UiButtonAction?
-        //
-        // UiButtonActionType has a `SetImage(UiImage)` variant.
-        //
-        // Or do I just `get_texture_mut`?
+        let button = music_button(world);
 
         // Header text.
         let header = core::generic_message(
@@ -84,12 +53,15 @@ impl SimpleState for Settings {
             "Esc to Pause, Q to Quit",
             Some(25.0),
         );
+
+        // Reset state fields.
         self.entities = vec![
             header,
             instructions,
-            ui_button.text_entity,
-            ui_button.image_entity,
+            button.ui_button.text_entity,
+            button.ui_button.image_entity,
         ];
+        self.button.replace(button);
     }
 
     fn on_stop(&mut self, data: StateData<GameData>) {
@@ -121,5 +93,44 @@ impl SimpleState for Settings {
             }
             _ => Trans::None,
         }
+    }
+}
+
+fn music_button(world: &mut World) -> Button {
+    let button_sheet = core::load_sprite_sheet(world, "button");
+    let unpressed_button = SpriteRender {
+        sprite_sheet: button_sheet.clone(),
+        sprite_number: 0,
+    };
+    let pressed_button = SpriteRender {
+        sprite_sheet: button_sheet,
+        sprite_number: 1,
+    };
+
+    let (_, ui_button) = UiButtonBuilder::<(), u32>::new("")
+        .with_anchor(Anchor::Middle)
+        .with_image(UiImage::Sprite(pressed_button.clone()))
+        .build_from_world(&world);
+
+    // Register button reactions.
+    let mut storage = world.write_storage::<UiButtonActionRetrigger>();
+    let retrigger = UiButtonActionRetrigger {
+        on_click_start: vec![],
+        on_click_stop: vec![UiButtonAction {
+            target: ui_button.image_entity,
+            event_type: UiButtonActionType::SetImage(UiImage::Sprite(unpressed_button.clone())),
+        }],
+        on_hover_start: vec![],
+        on_hover_stop: vec![],
+    };
+    let _ = storage.insert(ui_button.image_entity, retrigger);
+    // TODO Add/remove the `UiButtonActionRetrigger` component when the button
+    // is clicked! I can have two of them: each sets a different sprite.
+
+    Button {
+        ui_button: ui_button.clone(),
+        unpressed: unpressed_button,
+        pressed: pressed_button,
+        is_pressed: true,
     }
 }
