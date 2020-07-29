@@ -1,7 +1,7 @@
 use crate::audio;
 use crate::core;
 use crate::states::playing::Pong;
-use amethyst::core::Transform;
+use amethyst::core::Parent;
 use amethyst::ecs::Entity;
 use amethyst::input::InputEvent;
 use amethyst::prelude::*;
@@ -124,7 +124,7 @@ fn music_button(world: &mut World, font: FontHandle) -> Button {
             0.0,
             0.0,
             0.0,
-            100.0,
+            200.0,
             100.0,
         );
         world.create_entity().with(transform).build()
@@ -145,12 +145,7 @@ fn music_button(world: &mut World, font: FontHandle) -> Button {
     // etc.
     let (_, ui_button) = UiButtonBuilder::<(), u32>::new("")
         .with_size(36.0 * 3.0, 25.0 * 3.0)
-        // .with_stretch(Stretch::XY {
-        //     x_margin: 200.0,
-        //     y_margin: 200.0,
-        //     keep_aspect_ratio: true,
-        // })
-        .with_anchor(Anchor::Middle)
+        .with_anchor(Anchor::MiddleRight)
         .with_image(UiImage::Sprite(pressed_button))
         .with_parent(parent)
         .build_from_world(&world);
@@ -174,9 +169,9 @@ fn music_button(world: &mut World, font: FontHandle) -> Button {
     let label = {
         let transform = UiTransform::new(
             "Music".to_string(),
+            Anchor::MiddleLeft,
             Anchor::Middle,
-            Anchor::Middle,
-            -175.0,
+            0.0,
             0.0,
             0.0,
             50.0 * 5.0,
@@ -186,11 +181,12 @@ fn music_button(world: &mut World, font: FontHandle) -> Button {
         world
             .create_entity()
             .with(transform)
+            .with(Parent::new(parent))
             .with(UiText::new(
                 font,
                 "Music".to_string(),
                 [1.0, 1.0, 1.0, 1.0],
-                50.0,
+                40.0,
                 LineMode::Single,
                 Anchor::Middle,
             ))
