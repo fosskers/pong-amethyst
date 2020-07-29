@@ -14,6 +14,7 @@ struct Button {
     activation: UiButtonActionRetrigger,
     deactivation: UiButtonActionRetrigger,
     is_pressed: bool,
+    label: Entity,
 }
 
 pub struct Settings {
@@ -35,7 +36,7 @@ impl Settings {
 impl SimpleState for Settings {
     fn on_start(&mut self, data: StateData<GameData>) {
         let world = data.world;
-        let button = music_button(world);
+        let button = music_button(world, self.font.clone());
 
         // Header text.
         let header = core::generic_message(
@@ -61,6 +62,7 @@ impl SimpleState for Settings {
             instructions,
             button.ui_button.text_entity,
             button.ui_button.image_entity,
+            button.label,
         ];
         self.button.replace(button);
     }
@@ -109,7 +111,7 @@ fn toggle_button(world: &mut World, button: &mut Button) {
     }
 }
 
-fn music_button(world: &mut World) -> Button {
+fn music_button(world: &mut World, font: FontHandle) -> Button {
     let button_sheet = core::load_sprite_sheet(world, "button");
     let unpressed_button = SpriteRender {
         sprite_sheet: button_sheet.clone(),
@@ -120,32 +122,65 @@ fn music_button(world: &mut World) -> Button {
         sprite_number: 1,
     };
 
+    // I suppose you just have to know how big the image is? It doesn't seem
+    // like you can otherwise query the size of the image from `SpriteRender`,
+    // etc.
     let (_, ui_button) = UiButtonBuilder::<(), u32>::new("")
+        .with_size(36.0 * 3.0, 25.0 * 3.0)
         .with_anchor(Anchor::Middle)
         .with_image(UiImage::Sprite(pressed_button))
         .build_from_world(&world);
 
     // Register button reactions.
-    let mut storage = world.write_storage::<UiButtonActionRetrigger>();
-    let deactivation = retrigger(
-        ui_button.image_entity,
-        UiButtonActionType::SetImage(UiImage::Sprite(unpressed_button.clone())),
-    );
-    let activation = retrigger(
-        ui_button.image_entity,
-        UiButtonActionType::UnsetTexture(UiImage::Sprite(unpressed_button)),
-    );
-    let _ = storage.insert(ui_button.image_entity, deactivation.clone());
+    let (activation, deactivation) = {
+        let mut storage = world.write_storage::<UiButtonActionRetrigger>();
+        let deactivation = retrigger(
+            ui_button.image_entity,
+            UiButtonActionType::SetImage(UiImage::Sprite(unpressed_button.clone())),
+        );
+        let activation = retrigger(
+            ui_button.image_entity,
+            UiButtonActionType::UnsetTexture(UiImage::Sprite(unpressed_button)),
+        );
+        let _ = storage.insert(ui_button.image_entity, deactivation.clone());
+        (activation, deactivation)
+    };
+
+    // let label = core::generic_message(world, font, Anchor::Middle, "Music", None);
+    let label = {
+        let transform = UiTransform::new(
+            "Music".to_string(),
+            Anchor::Middle,
+            Anchor::Middle,
+            -150.0,
+            0.0,
+            0.0,
+            50.0 * 5.0,
+            50.0,
+        );
+
+        world
+            .create_entity()
+            .with(transform)
+            .with(UiText::new(
+                font,
+                "Music".to_string(),
+                [1.0, 1.0, 1.0, 1.0],
+                50.0,
+                LineMode::Single,
+                Anchor::Middle,
+            ))
+            .build()
+    };
 
     Button {
         ui_button: ui_button.clone(),
         activation,
         deactivation,
         is_pressed: true,
+        label,
     }
 }
-
-// TODO Is a better way to do all this with Systems and a custom `Toggled` component?
 
 fn retrigger(entity: Entity, event: UiButtonActionType) -> UiButtonActionRetrigger {
     UiButtonActionRetrigger {
