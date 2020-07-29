@@ -76,7 +76,7 @@ impl SimpleState for Settings {
             }
             StateEvent::Ui(UiEvent {
                 target,
-                event_type: UiEventType::Click,
+                event_type: UiEventType::ClickStop,
             }) if self
                 .button
                 .as_ref()
@@ -144,6 +144,8 @@ fn music_button(world: &mut World) -> Button {
         is_pressed: true,
     }
 }
+
+// TODO Is a better way to do all this with Systems and a custom `Toggled` component?
 
 fn retrigger(entity: Entity, event: UiButtonActionType) -> UiButtonActionRetrigger {
     UiButtonActionRetrigger {
