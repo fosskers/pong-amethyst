@@ -1,6 +1,7 @@
 use crate::audio;
 use crate::core;
 use crate::states::playing::Pong;
+use amethyst::core::Transform;
 use amethyst::ecs::Entity;
 use amethyst::input::InputEvent;
 use amethyst::prelude::*;
@@ -15,6 +16,7 @@ struct Button {
     deactivation: UiButtonActionRetrigger,
     is_pressed: bool,
     label: Entity,
+    parent: Entity,
 }
 
 pub struct Settings {
@@ -63,6 +65,7 @@ impl SimpleState for Settings {
             button.ui_button.text_entity,
             button.ui_button.image_entity,
             button.label,
+            button.parent,
         ];
         self.button.replace(button);
     }
@@ -112,6 +115,21 @@ fn toggle_button(world: &mut World, button: &mut Button) {
 }
 
 fn music_button(world: &mut World, font: FontHandle) -> Button {
+    // A parent entity to align the Button and Text relative to.
+    let parent = {
+        let transform = UiTransform::new(
+            "parent".to_string(),
+            Anchor::Middle,
+            Anchor::Middle,
+            0.0,
+            0.0,
+            0.0,
+            100.0,
+            100.0,
+        );
+        world.create_entity().with(transform).build()
+    };
+
     let button_sheet = core::load_sprite_sheet(world, "button");
     let unpressed_button = SpriteRender {
         sprite_sheet: button_sheet.clone(),
@@ -127,8 +145,14 @@ fn music_button(world: &mut World, font: FontHandle) -> Button {
     // etc.
     let (_, ui_button) = UiButtonBuilder::<(), u32>::new("")
         .with_size(36.0 * 3.0, 25.0 * 3.0)
+        // .with_stretch(Stretch::XY {
+        //     x_margin: 200.0,
+        //     y_margin: 200.0,
+        //     keep_aspect_ratio: true,
+        // })
         .with_anchor(Anchor::Middle)
         .with_image(UiImage::Sprite(pressed_button))
+        .with_parent(parent)
         .build_from_world(&world);
 
     // Register button reactions.
@@ -152,7 +176,7 @@ fn music_button(world: &mut World, font: FontHandle) -> Button {
             "Music".to_string(),
             Anchor::Middle,
             Anchor::Middle,
-            -150.0,
+            -175.0,
             0.0,
             0.0,
             50.0 * 5.0,
@@ -179,6 +203,7 @@ fn music_button(world: &mut World, font: FontHandle) -> Button {
         deactivation,
         is_pressed: true,
         label,
+        parent,
     }
 }
 
