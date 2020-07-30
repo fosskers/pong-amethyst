@@ -43,9 +43,10 @@ impl Settings {
 impl SimpleState for Settings {
     fn on_start(&mut self, data: StateData<GameData>) {
         let world = data.world;
-        let button_sheet = all_buttons(world);
-        let music_button = music_button(world, button_sheet.clone(), self.font.clone());
-        let (controls, c_label) = control_buttons(world, button_sheet, self.font.clone());
+        let sheet = all_buttons(world);
+        let music_button = music_button(world, sheet.clone(), self.font.clone());
+        let (controls, c_label) = control_buttons(world, sheet.clone(), self.font.clone());
+        let start = start_button(world, sheet);
 
         // Header text.
         let header = core::generic_message(
@@ -79,6 +80,8 @@ impl SimpleState for Settings {
             controls.right_button.image_entity,
             controls.parent,
             c_label,
+            start.text_entity,
+            start.image_entity,
         ];
         self.music_button.replace(music_button);
         self.control_buttons.replace(controls);
@@ -144,6 +147,27 @@ fn toggle_button(world: &mut World, button: &mut Button) {
 
 fn all_buttons(world: &mut World) -> Handle<SpriteSheet> {
     core::load_sprite_sheet(world, "button")
+}
+
+fn start_button(world: &mut World, sprite_sheet: Handle<SpriteSheet>) -> UiButton {
+    let up = SpriteRender {
+        sprite_sheet: sprite_sheet.clone(),
+        sprite_number: 6,
+    };
+    let down = SpriteRender {
+        sprite_sheet,
+        sprite_number: 7,
+    };
+
+    UiButtonBuilder::<(), u32>::new("")
+        .with_size(72.0 * BUTTON_SCALING, 25.0 * BUTTON_SCALING)
+        .with_anchor(Anchor::Middle)
+        .with_position(0.0, -150.0)
+        .with_image(UiImage::Sprite(up))
+        .with_press_image(UiImage::Sprite(down))
+        // .with_parent(parent)
+        .build_from_world(&world)
+        .1
 }
 
 fn control_buttons(
