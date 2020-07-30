@@ -24,7 +24,7 @@ struct Button {
 
 pub struct Settings {
     font: FontHandle, // TODO Put this in a global resource instead?
-    button: Option<Button>,
+    music_button: Option<Button>,
     entities: Vec<Entity>,
 }
 
@@ -32,7 +32,7 @@ impl Settings {
     pub fn new(font: FontHandle) -> Self {
         Settings {
             font,
-            button: None,
+            music_button: None,
             entities: vec![],
         }
     }
@@ -42,7 +42,7 @@ impl SimpleState for Settings {
     fn on_start(&mut self, data: StateData<GameData>) {
         let world = data.world;
         let button_sheet = all_buttons(world);
-        let button = music_button(world, button_sheet.clone(), self.font.clone());
+        let music_button = music_button(world, button_sheet.clone(), self.font.clone());
         let controls = control_buttons(world, button_sheet);
 
         // Header text.
@@ -67,16 +67,17 @@ impl SimpleState for Settings {
         self.entities = vec![
             header,
             instructions,
-            button.ui_button.text_entity,
-            button.ui_button.image_entity,
-            button.label,
-            button.parent,
+            music_button.ui_button.text_entity,
+            music_button.ui_button.image_entity,
+            music_button.label,
+            music_button.parent,
             controls.left_button.text_entity,
             controls.left_button.image_entity,
             controls.right_button.text_entity,
             controls.right_button.image_entity,
+            controls.parent,
         ];
-        self.button.replace(button);
+        self.music_button.replace(music_button);
     }
 
     fn on_stop(&mut self, data: StateData<GameData>) {
@@ -92,12 +93,12 @@ impl SimpleState for Settings {
                 target,
                 event_type: UiEventType::ClickStop,
             }) if self
-                .button
+                .music_button
                 .as_ref()
                 .map(|b| b.ui_button.image_entity == target)
                 .unwrap_or(false) =>
             {
-                if let Some(button) = self.button.as_mut() {
+                if let Some(button) = self.music_button.as_mut() {
                     toggle_button(data.world, button);
                 }
                 println!("[HANDLE_EVENT] You clicked the button!");

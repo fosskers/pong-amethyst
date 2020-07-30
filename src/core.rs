@@ -32,6 +32,7 @@ pub struct ButtonPair {
     pub left_button: UiButton,
     pub right_button: UiButton,
     pub pressed_side: Pressed,
+    pub parent: Entity,
 }
 
 impl ButtonPair {
@@ -61,6 +62,9 @@ impl ButtonPair {
             .with_parent(parent)
             .build_from_world(&world);
 
+        // An event triggered by one button can cause an Action to occur on
+        // another. We use this to change the image of the second button when
+        // the first is clicked (and vice versa).
         let click_left = UiButtonActionRetrigger {
             on_click_stop: vec![
                 UiButtonAction {
@@ -97,6 +101,7 @@ impl ButtonPair {
             left_button,
             right_button,
             pressed_side: Pressed::Left,
+            parent,
         }
     }
 }
