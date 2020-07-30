@@ -26,6 +26,7 @@ pub struct Settings {
     font: FontHandle, // TODO Put this in a global resource instead?
     music_button: Option<Button>,
     control_buttons: Option<ButtonPair>,
+    start_button: Option<UiButton>,
     entities: Vec<Entity>,
 }
 
@@ -35,6 +36,7 @@ impl Settings {
             font,
             music_button: None,
             control_buttons: None,
+            start_button: None,
             entities: vec![],
         }
     }
@@ -85,6 +87,7 @@ impl SimpleState for Settings {
         ];
         self.music_button.replace(music_button);
         self.control_buttons.replace(controls);
+        self.start_button.replace(start);
     }
 
     fn on_stop(&mut self, data: StateData<GameData>) {
@@ -93,9 +96,6 @@ impl SimpleState for Settings {
 
     fn handle_event(&mut self, data: StateData<GameData>, event: StateEvent) -> SimpleTrans {
         match event {
-            StateEvent::Input(InputEvent::KeyPressed { .. }) => {
-                Trans::Replace(Box::new(Pong::new(self.font.clone())))
-            }
             StateEvent::Ui(UiEvent {
                 target,
                 event_type: UiEventType::ClickStop,
@@ -121,6 +121,13 @@ impl SimpleState for Settings {
                             button.pressed_side = Pressed::Right;
                         }
                         _ => {}
+                    }
+                }
+
+                // Was the Start button pressed?
+                if let Some(button) = &self.start_button {
+                    if button.image_entity == target {
+                        return Trans::Replace(Box::new(Pong::new(self.font.clone())));
                     }
                 }
 
@@ -165,7 +172,6 @@ fn start_button(world: &mut World, sprite_sheet: Handle<SpriteSheet>) -> UiButto
         .with_position(0.0, -150.0)
         .with_image(UiImage::Sprite(up))
         .with_press_image(UiImage::Sprite(down))
-        // .with_parent(parent)
         .build_from_world(&world)
         .1
 }
