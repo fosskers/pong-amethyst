@@ -45,7 +45,7 @@ impl SimpleState for Settings {
         let world = data.world;
         let button_sheet = all_buttons(world);
         let music_button = music_button(world, button_sheet.clone(), self.font.clone());
-        let controls = control_buttons(world, button_sheet);
+        let controls = control_buttons(world, button_sheet, self.font.clone());
 
         // Header text.
         let header = core::generic_message(
@@ -145,7 +145,11 @@ fn all_buttons(world: &mut World) -> Handle<SpriteSheet> {
     core::load_sprite_sheet(world, "button")
 }
 
-fn control_buttons(world: &mut World, button_sheet: Handle<SpriteSheet>) -> ButtonPair {
+fn control_buttons(
+    world: &mut World,
+    button_sheet: Handle<SpriteSheet>,
+    font: FontHandle,
+) -> ButtonPair {
     let left_up = sized_button(button_sheet.clone(), 2);
     let left_down = sized_button(button_sheet.clone(), 3);
     let right_up = sized_button(button_sheet.clone(), 4);
@@ -179,7 +183,34 @@ fn control_buttons(world: &mut World, button_sheet: Handle<SpriteSheet>) -> Butt
         world
             .create_entity()
             .with(transform)
-            .with(Parent { entity: parent })
+            .with(Parent::new(parent))
+            .build()
+    };
+
+    let label = {
+        let transform = UiTransform::new(
+            "P1 Controls".to_string(),
+            Anchor::MiddleLeft,
+            Anchor::Middle,
+            0.0,
+            0.0,
+            0.0,
+            50.0 * 5.0,
+            50.0,
+        );
+
+        world
+            .create_entity()
+            .with(transform)
+            .with(Parent::new(parent))
+            .with(UiText::new(
+                font,
+                "P1 Controls".to_string(),
+                [1.0, 1.0, 1.0, 1.0],
+                25.0,
+                LineMode::Single,
+                Anchor::MiddleLeft,
+            ))
             .build()
     };
 
@@ -254,7 +285,6 @@ fn music_button(world: &mut World, button_sheet: Handle<SpriteSheet>, font: Font
         (activation, deactivation)
     };
 
-    // let label = core::generic_message(world, font, Anchor::Middle, "Music", None);
     let label = {
         let transform = UiTransform::new(
             "Music".to_string(),
@@ -275,9 +305,9 @@ fn music_button(world: &mut World, button_sheet: Handle<SpriteSheet>, font: Font
                 font,
                 "Music".to_string(),
                 [1.0, 1.0, 1.0, 1.0],
-                40.0,
+                25.0,
                 LineMode::Single,
-                Anchor::Middle,
+                Anchor::MiddleLeft,
             ))
             .build()
     };
