@@ -45,7 +45,7 @@ impl SimpleState for Settings {
         let world = data.world;
         let button_sheet = all_buttons(world);
         let music_button = music_button(world, button_sheet.clone(), self.font.clone());
-        let controls = control_buttons(world, button_sheet, self.font.clone());
+        let (controls, c_label) = control_buttons(world, button_sheet, self.font.clone());
 
         // Header text.
         let header = core::generic_message(
@@ -78,6 +78,7 @@ impl SimpleState for Settings {
             controls.right_button.text_entity,
             controls.right_button.image_entity,
             controls.parent,
+            c_label,
         ];
         self.music_button.replace(music_button);
         self.control_buttons.replace(controls);
@@ -149,7 +150,7 @@ fn control_buttons(
     world: &mut World,
     button_sheet: Handle<SpriteSheet>,
     font: FontHandle,
-) -> ButtonPair {
+) -> (ButtonPair, Entity) {
     let left_up = sized_button(button_sheet.clone(), 2);
     let left_down = sized_button(button_sheet.clone(), 3);
     let right_up = sized_button(button_sheet.clone(), 4);
@@ -161,7 +162,7 @@ fn control_buttons(
             Anchor::Middle,
             Anchor::Middle,
             0.0,
-            -100.0,
+            -50.0,
             0.0,
             200.0,
             100.0,
@@ -214,14 +215,16 @@ fn control_buttons(
             .build()
     };
 
-    ButtonPair::new(
+    let button_pair = ButtonPair::new(
         world,
         left_up,
         left_down,
         right_up,
         right_down,
         button_parent,
-    )
+    );
+
+    (button_pair, label)
 }
 
 fn sized_button(sprite_sheet: Handle<SpriteSheet>, sprite_number: usize) -> SizedSprite {
@@ -243,7 +246,7 @@ fn music_button(world: &mut World, button_sheet: Handle<SpriteSheet>, font: Font
             Anchor::Middle,
             Anchor::Middle,
             0.0,
-            0.0,
+            50.0,
             0.0,
             200.0,
             100.0,
