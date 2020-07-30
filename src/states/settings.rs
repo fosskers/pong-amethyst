@@ -1,5 +1,5 @@
 use crate::audio;
-use crate::core::{self, ButtonPair, SizedSprite};
+use crate::core::{self, ButtonPair, Pressed, SizedSprite};
 use crate::states::playing::Pong;
 use amethyst::assets::Handle;
 use amethyst::core::Parent;
@@ -25,6 +25,7 @@ struct Button {
 pub struct Settings {
     font: FontHandle, // TODO Put this in a global resource instead?
     music_button: Option<Button>,
+    control_buttons: Option<ButtonPair>,
     entities: Vec<Entity>,
 }
 
@@ -33,6 +34,7 @@ impl Settings {
         Settings {
             font,
             music_button: None,
+            control_buttons: None,
             entities: vec![],
         }
     }
@@ -78,6 +80,7 @@ impl SimpleState for Settings {
             controls.parent,
         ];
         self.music_button.replace(music_button);
+        self.control_buttons.replace(controls);
     }
 
     fn on_stop(&mut self, data: StateData<GameData>) {
@@ -92,17 +95,31 @@ impl SimpleState for Settings {
             StateEvent::Ui(UiEvent {
                 target,
                 event_type: UiEventType::ClickStop,
-            }) if self
-                .music_button
-                .as_ref()
-                .map(|b| b.ui_button.image_entity == target)
-                .unwrap_or(false) =>
-            {
+            }) => {
+                // Was the music button pressed?
                 if let Some(button) = self.music_button.as_mut() {
-                    toggle_button(data.world, button);
+                    if button.ui_button.image_entity == target {
+                        println!("[HANDLE_EVENT] You clicked the music button!");
+                        audio::toggle_bgm(data.world);
+                        toggle_button(data.world, button);
+                    }
                 }
-                println!("[HANDLE_EVENT] You clicked the button!");
-                audio::toggle_bgm(data.world);
+
+                // Were the control buttons pressed?
+                if let Some(button) = self.control_buttons.as_mut() {
+                    match button.pressed_side {
+                        Pressed::Right if button.left_button.image_entity == target => {
+                            println!("[HANDLE_EVENT] You clicked the WS button!");
+                            button.pressed_side = Pressed::Left;
+                        }
+                        Pressed::Left if button.right_button.image_entity == target => {
+                            println!("[HANDLE_EVENT] You clicked the WR button!");
+                            button.pressed_side = Pressed::Right;
+                        }
+                        _ => {}
+                    }
+                }
+
                 Trans::None
             }
             _ => Trans::None,
