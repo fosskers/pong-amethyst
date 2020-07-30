@@ -1,16 +1,47 @@
+// TODO Condense this.
 List((
     texture_width: 72,
-    texture_height: 25,
+    texture_height: 75,
     sprites: [
+        // Music off
         (
             x: 0,
             y: 0,
             width: 36,
             height: 25,
         ),
+        // Music on
         (
             x: 36,
             y: 0,
+            width: 36,
+            height: 25,
+        ),
+        // WS off
+        (
+            x: 0,
+            y: 25,
+            width: 36,
+            height: 25,
+        ),
+        // WS on
+        (
+            x: 36,
+            y: 25,
+            width: 36,
+            height: 25,
+        ),
+        // WR off
+        (
+            x: 0,
+            y: 50,
+            width: 36,
+            height: 25,
+        ),
+        // WR on
+        (
+            x: 36,
+            y: 50,
             width: 36,
             height: 25,
         ),

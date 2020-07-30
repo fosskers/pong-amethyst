@@ -5,8 +5,10 @@ use amethyst::core::transform::Transform;
 use amethyst::ecs::prelude::{Component, DenseVecStorage};
 use amethyst::ecs::Entity;
 use amethyst::prelude::*;
-use amethyst::renderer::{Camera, ImageFormat, SpriteSheet, SpriteSheetFormat, Texture};
-use amethyst::ui::{Anchor, FontHandle, LineMode, UiText, UiTransform};
+use amethyst::renderer::{
+    Camera, ImageFormat, SpriteRender, SpriteSheet, SpriteSheetFormat, Texture,
+};
+use amethyst::ui::*;
 
 pub const ARENA_HEIGHT: f32 = 100.0;
 pub const ARENA_WIDTH: f32 = 100.0;
@@ -17,6 +19,92 @@ pub const PADDLE_WIDTH: f32 = 4.0;
 pub const BALL_VELOCITY_X: f32 = 65.0;
 pub const BALL_VELOCITY_Y: f32 = 50.0;
 pub const BALL_RADIUS: f32 = 2.0;
+
+/// A `SpriteRender` that knows its pixel dimensions.
+pub struct SizedSprite {
+    pub sprite: SpriteRender,
+    pub width: f32,
+    pub height: f32,
+}
+
+/// A pair of buttons. Clicking one will toggle some change in both.
+pub struct ButtonPair {
+    pub left_button: UiButton,
+    pub right_button: UiButton,
+    pub pressed_side: Pressed,
+}
+
+impl ButtonPair {
+    /// Generates `UiButton`s into the `World`, and registers custom
+    /// `UiButtonActionRetrigger`s for them as well for the toggling animation.
+    pub fn new(
+        world: &mut World,
+        left_up: SizedSprite,
+        left_down: SizedSprite,
+        right_up: SizedSprite,
+        right_down: SizedSprite,
+        parent: Entity,
+    ) -> ButtonPair {
+        let (_, left_button) = UiButtonBuilder::<(), u32>::new("")
+            .with_size(left_down.width, left_down.height)
+            .with_position(left_down.width / -2.0, 0.0)
+            .with_anchor(Anchor::Middle)
+            .with_image(UiImage::Sprite(left_down.sprite.clone()))
+            .with_parent(parent)
+            .build_from_world(&world);
+
+        let (_, right_button) = UiButtonBuilder::<(), u32>::new("")
+            .with_size(right_down.width, right_down.height)
+            .with_position(right_down.width / 2.0, 0.0)
+            .with_anchor(Anchor::Middle)
+            .with_image(UiImage::Sprite(right_up.sprite.clone()))
+            .with_parent(parent)
+            .build_from_world(&world);
+
+        let click_left = UiButtonActionRetrigger {
+            on_click_stop: vec![
+                UiButtonAction {
+                    target: left_button.image_entity,
+                    event_type: UiButtonActionType::SetImage(UiImage::Sprite(left_down.sprite)),
+                },
+                UiButtonAction {
+                    target: right_button.image_entity,
+                    event_type: UiButtonActionType::SetImage(UiImage::Sprite(right_up.sprite)),
+                },
+            ],
+            ..Default::default()
+        };
+
+        let click_right = UiButtonActionRetrigger {
+            on_click_stop: vec![
+                UiButtonAction {
+                    target: left_button.image_entity,
+                    event_type: UiButtonActionType::SetImage(UiImage::Sprite(left_up.sprite)),
+                },
+                UiButtonAction {
+                    target: right_button.image_entity,
+                    event_type: UiButtonActionType::SetImage(UiImage::Sprite(right_down.sprite)),
+                },
+            ],
+            ..Default::default()
+        };
+
+        let mut storage = world.write_storage::<UiButtonActionRetrigger>();
+        let _ = storage.insert(left_button.image_entity, click_left);
+        let _ = storage.insert(right_button.image_entity, click_right);
+
+        ButtonPair {
+            left_button,
+            right_button,
+            pressed_side: Pressed::Left,
+        }
+    }
+}
+
+pub enum Pressed {
+    Left,
+    Right,
+}
 
 /// A component for Entities whose activity can be halted.
 pub struct Active {
