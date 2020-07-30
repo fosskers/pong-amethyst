@@ -151,19 +151,46 @@ fn control_buttons(world: &mut World, button_sheet: Handle<SpriteSheet>) -> Butt
     let right_up = sized_button(button_sheet.clone(), 4);
     let right_down = sized_button(button_sheet, 5);
 
-    let transform = UiTransform::new(
-        "controls_parent".to_string(),
-        Anchor::Middle,
-        Anchor::Middle,
-        0.0,
-        -100.0,
-        0.0,
-        200.0,
-        100.0,
-    );
-    let parent = world.create_entity().with(transform).build();
+    let parent = {
+        let transform = UiTransform::new(
+            "controls_parent".to_string(),
+            Anchor::Middle,
+            Anchor::Middle,
+            0.0,
+            -100.0,
+            0.0,
+            200.0,
+            100.0,
+        );
+        world.create_entity().with(transform).build()
+    };
 
-    ButtonPair::new(world, left_up, left_down, right_up, right_down, parent)
+    let button_parent = {
+        let transform = UiTransform::new(
+            "controls_parent".to_string(),
+            Anchor::MiddleRight,
+            Anchor::Middle,
+            0.0,
+            0.0,
+            0.0,
+            10.0,
+            10.0,
+        );
+        world
+            .create_entity()
+            .with(transform)
+            .with(Parent { entity: parent })
+            .build()
+    };
+
+    ButtonPair::new(
+        world,
+        left_up,
+        left_down,
+        right_up,
+        right_down,
+        button_parent,
+    )
 }
 
 fn sized_button(sprite_sheet: Handle<SpriteSheet>, sprite_number: usize) -> SizedSprite {

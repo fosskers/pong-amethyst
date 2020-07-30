@@ -48,7 +48,6 @@ impl ButtonPair {
     ) -> ButtonPair {
         let (_, left_button) = UiButtonBuilder::<(), u32>::new("")
             .with_size(left_down.width, left_down.height)
-            .with_position(left_down.width / -2.0, 0.0)
             .with_anchor(Anchor::Middle)
             .with_image(UiImage::Sprite(left_down.sprite.clone()))
             .with_parent(parent)
@@ -56,7 +55,7 @@ impl ButtonPair {
 
         let (_, right_button) = UiButtonBuilder::<(), u32>::new("")
             .with_size(right_down.width, right_down.height)
-            .with_position(right_down.width / 2.0, 0.0)
+            .with_position(right_down.width, 0.0)
             .with_anchor(Anchor::Middle)
             .with_image(UiImage::Sprite(right_up.sprite.clone()))
             .with_parent(parent)
