@@ -96,6 +96,7 @@ impl SimpleState for Settings {
 
     fn handle_event(&mut self, data: StateData<GameData>, event: StateEvent) -> SimpleTrans {
         match event {
+            StateEvent::Input(InputEvent::ActionPressed(a)) if a == "quit" => Trans::Quit,
             StateEvent::Ui(UiEvent {
                 target,
                 event_type: UiEventType::ClickStop,
@@ -169,7 +170,7 @@ fn start_button(world: &mut World, sprite_sheet: Handle<SpriteSheet>) -> UiButto
     UiButtonBuilder::<(), u32>::new("")
         .with_size(72.0 * BUTTON_SCALING, 25.0 * BUTTON_SCALING)
         .with_anchor(Anchor::Middle)
-        .with_position(0.0, -150.0)
+        .with_position(0.0, -100.0)
         .with_image(UiImage::Sprite(up))
         .with_press_image(UiImage::Sprite(down))
         .build_from_world(&world)
@@ -192,7 +193,7 @@ fn control_buttons(
             Anchor::Middle,
             Anchor::Middle,
             0.0,
-            -50.0,
+            0.0,
             0.0,
             200.0,
             100.0,
@@ -276,7 +277,7 @@ fn music_button(world: &mut World, button_sheet: Handle<SpriteSheet>, font: Font
             Anchor::Middle,
             Anchor::Middle,
             0.0,
-            50.0,
+            100.0,
             0.0,
             200.0,
             100.0,
