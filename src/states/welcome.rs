@@ -1,5 +1,6 @@
 use crate::audio;
 use crate::core::{self, *};
+use crate::states::playing::Pong;
 use crate::states::settings::Settings;
 use amethyst::assets::{AssetStorage, Handle, Loader};
 use amethyst::core::transform::Transform;
@@ -65,7 +66,7 @@ impl SimpleState for Welcome {
                     if conf.image_entity == target {
                         Trans::Replace(Box::new(Settings::new(font.clone(), sheet.clone())))
                     } else if start.image_entity == target {
-                        Trans::Replace(Box::new(Settings::new(font.clone(), sheet.clone())))
+                        Trans::Replace(Box::new(Pong::new(font.clone())))
                     } else {
                         Trans::None
                     }
