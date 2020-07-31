@@ -4,6 +4,7 @@ use crate::states::settings::Settings;
 use amethyst::assets::{AssetStorage, Handle, Loader};
 use amethyst::core::transform::Transform;
 use amethyst::ecs::Entity;
+use amethyst::input::InputEvent;
 use amethyst::prelude::*;
 use amethyst::renderer::{ImageFormat, SpriteRender, SpriteSheet, SpriteSheetFormat, Texture};
 use amethyst::ui::*;
@@ -52,6 +53,7 @@ impl SimpleState for Welcome {
 
     fn handle_event(&mut self, _: StateData<GameData>, event: StateEvent) -> SimpleTrans {
         match event {
+            StateEvent::Input(InputEvent::ActionPressed(a)) if a == "quit" => Trans::Quit,
             StateEvent::Ui(UiEvent {
                 target,
                 event_type: UiEventType::ClickStop,
