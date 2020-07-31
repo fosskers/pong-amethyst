@@ -65,7 +65,7 @@ impl ButtonPair {
         // another. We use this to change the image of the second button when
         // the first is clicked (and vice versa).
         let click_left = UiButtonActionRetrigger {
-            on_click_stop: vec![
+            on_click_start: vec![
                 UiButtonAction {
                     target: left_button.image_entity,
                     event_type: UiButtonActionType::SetImage(UiImage::Sprite(left_down.sprite)),
@@ -79,7 +79,7 @@ impl ButtonPair {
         };
 
         let click_right = UiButtonActionRetrigger {
-            on_click_stop: vec![
+            on_click_start: vec![
                 UiButtonAction {
                     target: left_button.image_entity,
                     event_type: UiButtonActionType::SetImage(UiImage::Sprite(left_up.sprite)),
