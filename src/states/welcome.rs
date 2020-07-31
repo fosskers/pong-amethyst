@@ -4,7 +4,6 @@ use crate::states::settings::Settings;
 use amethyst::assets::{AssetStorage, Handle, Loader};
 use amethyst::core::transform::Transform;
 use amethyst::ecs::Entity;
-use amethyst::input::InputEvent;
 use amethyst::prelude::*;
 use amethyst::renderer::{ImageFormat, SpriteRender, SpriteSheet, SpriteSheetFormat, Texture};
 use amethyst::ui::*;
@@ -12,7 +11,9 @@ use amethyst::ui::*;
 /// The initial landing screen.
 #[derive(Default)]
 pub struct Welcome {
-    font: Option<FontHandle>, // TODO Put this in a global resource instead?
+    font: Option<FontHandle>,
+    conf_button: Option<UiButton>,
+    start_button: Option<UiButton>,
     entities: Vec<Entity>,
 }
 
@@ -38,6 +39,8 @@ impl SimpleState for Welcome {
             start.text_entity,
             start.image_entity,
         ];
+        self.conf_button.replace(conf);
+        self.start_button.replace(start);
 
         initialize_camera(world);
         audio::initialize_audio(world);
@@ -49,11 +52,21 @@ impl SimpleState for Welcome {
 
     fn handle_event(&mut self, _: StateData<GameData>, event: StateEvent) -> SimpleTrans {
         match event {
-            StateEvent::Input(InputEvent::KeyPressed { .. }) => self
-                .font
-                .as_ref()
-                .map(|font| Trans::Replace(Box::new(Settings::new(font.clone()))))
-                .unwrap_or(Trans::None),
+            StateEvent::Ui(UiEvent {
+                target,
+                event_type: UiEventType::ClickStop,
+            }) => match (&self.conf_button, &self.start_button, &self.font) {
+                (Some(conf), Some(start), Some(font)) => {
+                    if conf.image_entity == target {
+                        Trans::Replace(Box::new(Settings::new(font.clone())))
+                    } else if start.image_entity == target {
+                        Trans::Replace(Box::new(Settings::new(font.clone())))
+                    } else {
+                        Trans::None
+                    }
+                }
+                _ => Trans::None,
+            },
             _ => Trans::None,
         }
     }
