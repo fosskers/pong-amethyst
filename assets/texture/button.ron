@@ -1,7 +1,7 @@
 // TODO Condense this.
 List((
     texture_width: 72,
-    texture_height: 125,
+    texture_height: 175,
     sprites: [
         // Music off
         (
@@ -56,6 +56,20 @@ List((
         (
             x: 0,
             y: 100,
+            width: 72,
+            height: 25,
+        ),
+        // Conf Up
+        (
+            x: 0,
+            y: 125,
+            width: 72,
+            height: 25,
+        ),
+        // Conf Down
+        (
+            x: 0,
+            y: 150,
             width: 72,
             height: 25,
         ),
