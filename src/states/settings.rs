@@ -1,13 +1,13 @@
 use crate::audio;
-use crate::core::{self, ButtonPair, Pressed, SizedSprite, BUTTON_SCALING};
+use crate::core::{self, ButtonPair, Pressed, SizedSprite, Sprite, BUTTON_SCALING};
 use crate::states::playing::Pong;
 use amethyst::assets::Handle;
 use amethyst::core::Parent;
 use amethyst::ecs::Entity;
 use amethyst::input::InputEvent;
 use amethyst::prelude::*;
-use amethyst::renderer::{SpriteRender, SpriteSheet};
-use amethyst::ui::*;
+use amethyst::renderer::SpriteSheet;
+use amethyst::ui::{UiButtonActionType::*, *};
 
 /// A UI button that can be toggled, maintaining its up/down sprite until the
 /// next time it is clicked.
@@ -162,21 +162,15 @@ fn toggle_button(world: &mut World, button: &mut Button) {
 }
 
 fn start_button(world: &mut World, sprite_sheet: &Handle<SpriteSheet>) -> UiButton {
-    let up = SpriteRender {
-        sprite_sheet: sprite_sheet.clone(),
-        sprite_number: 6,
-    };
-    let down = SpriteRender {
-        sprite_sheet: sprite_sheet.clone(),
-        sprite_number: 7,
-    };
+    let up = Sprite::new(sprite_sheet.clone(), 6);
+    let down = Sprite::new(sprite_sheet.clone(), 7);
 
     UiButtonBuilder::<(), u32>::new("")
         .with_size(72.0 * BUTTON_SCALING, 25.0 * BUTTON_SCALING)
         .with_anchor(Anchor::Middle)
         .with_position(0.0, -100.0)
-        .with_image(UiImage::Sprite(up))
-        .with_press_image(UiImage::Sprite(down))
+        .with_image(UiImage::Sprite(up.0))
+        .with_press_image(UiImage::Sprite(down.0))
         .build_from_world(&world)
         .1
 }
@@ -264,10 +258,7 @@ fn control_buttons(
 
 fn sized_button(sprite_sheet: Handle<SpriteSheet>, sprite_number: usize) -> SizedSprite {
     SizedSprite {
-        sprite: SpriteRender {
-            sprite_sheet,
-            sprite_number,
-        },
+        sprite: Sprite::new(sprite_sheet, sprite_number),
         width: 36.0 * BUTTON_SCALING,
         height: 25.0 * BUTTON_SCALING,
     }
@@ -293,14 +284,8 @@ fn music_button(
         world.create_entity().with(transform).build()
     };
 
-    let unpressed_button = SpriteRender {
-        sprite_sheet: button_sheet.clone(),
-        sprite_number: 0,
-    };
-    let pressed_button = SpriteRender {
-        sprite_sheet: button_sheet.clone(),
-        sprite_number: 1,
-    };
+    let unpressed = Sprite::new(button_sheet.clone(), 0);
+    let pressed = Sprite::new(button_sheet.clone(), 1);
 
     // I suppose you just have to know how big the image is? It doesn't seem
     // like you can otherwise query the size of the image from `SpriteRender`,
@@ -308,7 +293,7 @@ fn music_button(
     let (_, ui_button) = UiButtonBuilder::<(), u32>::new("")
         .with_size(36.0 * BUTTON_SCALING, 25.0 * BUTTON_SCALING)
         .with_anchor(Anchor::MiddleRight)
-        .with_image(UiImage::Sprite(pressed_button))
+        .with_image(UiImage::Sprite(pressed.0))
         .with_parent(parent)
         .build_from_world(&world);
 
@@ -317,11 +302,11 @@ fn music_button(
         let mut storage = world.write_storage::<UiButtonActionRetrigger>();
         let deactivation = retrigger(
             ui_button.image_entity,
-            UiButtonActionType::SetImage(UiImage::Sprite(unpressed_button.clone())),
+            SetImage(UiImage::Sprite(unpressed.0.clone())),
         );
         let activation = retrigger(
             ui_button.image_entity,
-            UiButtonActionType::UnsetTexture(UiImage::Sprite(unpressed_button)),
+            UnsetTexture(UiImage::Sprite(unpressed.0)),
         );
         let _ = storage.insert(ui_button.image_entity, deactivation.clone());
         (activation, deactivation)

@@ -8,7 +8,7 @@ use amethyst::prelude::*;
 use amethyst::renderer::{
     Camera, ImageFormat, SpriteRender, SpriteSheet, SpriteSheetFormat, Texture,
 };
-use amethyst::ui::*;
+use amethyst::ui::{UiButtonActionType::*, *};
 
 pub const ARENA_HEIGHT: f32 = 100.0;
 pub const ARENA_WIDTH: f32 = 100.0;
@@ -22,9 +22,22 @@ pub const BALL_RADIUS: f32 = 2.0;
 
 pub const BUTTON_SCALING: f32 = 3.0;
 
+// TODO Remove this once my PR is merged: https://github.com/amethyst/amethyst/pull/2395
+/// An alias over `SpriteRender` that's cleaner to construct.
+pub struct Sprite(pub SpriteRender);
+
+impl Sprite {
+    pub fn new(sprite_sheet: Handle<SpriteSheet>, sprite_number: usize) -> Sprite {
+        Sprite(SpriteRender {
+            sprite_sheet,
+            sprite_number,
+        })
+    }
+}
+
 /// A `SpriteRender` that knows its pixel dimensions.
 pub struct SizedSprite {
-    pub sprite: SpriteRender,
+    pub sprite: Sprite,
     pub width: f32,
     pub height: f32,
 }
@@ -51,7 +64,7 @@ impl ButtonPair {
         let (_, left_button) = UiButtonBuilder::<(), u32>::new("")
             .with_size(left_down.width, left_down.height)
             .with_anchor(Anchor::Middle)
-            .with_image(UiImage::Sprite(left_down.sprite.clone()))
+            .with_image(UiImage::Sprite(left_down.sprite.0.clone()))
             .with_parent(parent)
             .build_from_world(&world);
 
@@ -59,7 +72,7 @@ impl ButtonPair {
             .with_size(right_down.width, right_down.height)
             .with_position(right_down.width, 0.0)
             .with_anchor(Anchor::Middle)
-            .with_image(UiImage::Sprite(right_up.sprite.clone()))
+            .with_image(UiImage::Sprite(right_up.sprite.0.clone()))
             .with_parent(parent)
             .build_from_world(&world);
 
@@ -70,11 +83,11 @@ impl ButtonPair {
             on_click_start: vec![
                 UiButtonAction {
                     target: left_button.image_entity,
-                    event_type: UiButtonActionType::SetImage(UiImage::Sprite(left_down.sprite)),
+                    event_type: SetImage(UiImage::Sprite(left_down.sprite.0)),
                 },
                 UiButtonAction {
                     target: right_button.image_entity,
-                    event_type: UiButtonActionType::SetImage(UiImage::Sprite(right_up.sprite)),
+                    event_type: SetImage(UiImage::Sprite(right_up.sprite.0)),
                 },
             ],
             ..Default::default()
@@ -84,11 +97,11 @@ impl ButtonPair {
             on_click_start: vec![
                 UiButtonAction {
                     target: left_button.image_entity,
-                    event_type: UiButtonActionType::SetImage(UiImage::Sprite(left_up.sprite)),
+                    event_type: SetImage(UiImage::Sprite(left_up.sprite.0)),
                 },
                 UiButtonAction {
                     target: right_button.image_entity,
-                    event_type: UiButtonActionType::SetImage(UiImage::Sprite(right_down.sprite)),
+                    event_type: SetImage(UiImage::Sprite(right_down.sprite.0)),
                 },
             ],
             ..Default::default()
@@ -118,6 +131,14 @@ pub struct Active {
     pub countdown: Option<f32>,
 }
 
+impl Active {
+    pub fn new(countdown: f32) -> Active {
+        Active {
+            countdown: Some(countdown),
+        }
+    }
+}
+
 impl Component for Active {
     type Storage = DenseVecStorage<Active>;
 }
@@ -142,6 +163,12 @@ pub struct FPS(pub Entity);
 pub struct Ball {
     pub velocity: [f32; 2],
     pub radius: f32,
+}
+
+impl Ball {
+    pub fn new(radius: f32, velocity: [f32; 2]) -> Ball {
+        Ball { velocity, radius }
+    }
 }
 
 impl Component for Ball {

@@ -6,7 +6,7 @@ use amethyst::core::transform::Transform;
 use amethyst::ecs::Entity;
 use amethyst::input::InputEvent;
 use amethyst::prelude::*;
-use amethyst::renderer::{ImageFormat, SpriteRender, SpriteSheet, SpriteSheetFormat, Texture};
+use amethyst::renderer::{ImageFormat, SpriteSheet, SpriteSheetFormat, Texture};
 use amethyst::ui::*;
 
 /// The initial landing screen.
@@ -78,47 +78,32 @@ impl SimpleState for Welcome {
 }
 
 fn buttons(world: &mut World, sprite_sheet: Handle<SpriteSheet>) -> (UiButton, UiButton) {
-    let start_up = SpriteRender {
-        sprite_sheet: sprite_sheet.clone(),
-        sprite_number: 6,
-    };
-
-    let start_down = SpriteRender {
-        sprite_sheet: sprite_sheet.clone(),
-        sprite_number: 7,
-    };
-
-    let conf_up = SpriteRender {
-        sprite_sheet: sprite_sheet.clone(),
-        sprite_number: 8,
-    };
-
-    let conf_down = SpriteRender {
-        sprite_sheet: sprite_sheet.clone(),
-        sprite_number: 9,
-    };
+    let start_up = Sprite::new(sprite_sheet.clone(), 6);
+    let start_down = Sprite::new(sprite_sheet.clone(), 7);
+    let conf_up = Sprite::new(sprite_sheet.clone(), 8);
+    let conf_down = Sprite::new(sprite_sheet.clone(), 9);
 
     let (_, conf) = UiButtonBuilder::<(), u32>::new("")
         .with_size(72.0 * BUTTON_SCALING, 25.0 * BUTTON_SCALING)
         .with_anchor(Anchor::BottomMiddle)
         .with_position(-36.0 * BUTTON_SCALING, 25.0 * BUTTON_SCALING)
-        .with_image(UiImage::Sprite(conf_up))
-        .with_press_image(UiImage::Sprite(conf_down))
+        .with_image(UiImage::Sprite(conf_up.0))
+        .with_press_image(UiImage::Sprite(conf_down.0))
         .build_from_world(&world);
 
     let (_, start) = UiButtonBuilder::<(), u32>::new("")
         .with_size(72.0 * BUTTON_SCALING, 25.0 * BUTTON_SCALING)
         .with_anchor(Anchor::BottomMiddle)
         .with_position(36.0 * BUTTON_SCALING, 25.0 * BUTTON_SCALING)
-        .with_image(UiImage::Sprite(start_up))
-        .with_press_image(UiImage::Sprite(start_down))
+        .with_image(UiImage::Sprite(start_up.0))
+        .with_press_image(UiImage::Sprite(start_down.0))
         .build_from_world(&world);
 
     (conf, start)
 }
 
 fn initialize_logo(world: &mut World) -> Entity {
-    let sprite_render = {
+    let sprite = {
         let loader = world.read_resource::<Loader>();
         let texture_storage = world.read_resource::<AssetStorage<Texture>>();
         let sprite_sheet_storage = world.read_resource::<AssetStorage<SpriteSheet>>();
@@ -137,18 +122,11 @@ fn initialize_logo(world: &mut World) -> Entity {
             &sprite_sheet_storage,
         );
 
-        SpriteRender {
-            sprite_sheet,
-            sprite_number: 0,
-        }
+        Sprite::new(sprite_sheet, 0)
     };
 
     let mut transform = Transform::default();
     transform.set_translation_xyz(ARENA_WIDTH / 2.0, ARENA_HEIGHT / 2.0, 0.0);
 
-    world
-        .create_entity()
-        .with(transform)
-        .with(sprite_render)
-        .build()
+    world.create_entity().with(transform).with(sprite.0).build()
 }

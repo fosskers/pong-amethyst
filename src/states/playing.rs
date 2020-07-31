@@ -8,7 +8,7 @@ use amethyst::core::ArcThreadPool;
 use amethyst::ecs::{Dispatcher, DispatcherBuilder, Entity};
 use amethyst::input::InputEvent;
 use amethyst::prelude::*;
-use amethyst::renderer::{SpriteRender, SpriteSheet};
+use amethyst::renderer::SpriteSheet;
 use amethyst::ui::{Anchor, FontHandle, LineMode, UiText, UiTransform};
 use amethyst::utils::fps_counter::FpsCounter;
 
@@ -182,28 +182,18 @@ fn initialize_fps(world: &mut World, font: FontHandle) -> Entity {
 }
 
 fn initialize_ball(world: &mut World, sprite_sheet: Handle<SpriteSheet>) -> Entity {
-    let mut local_transform = Transform::default();
-    local_transform.set_translation_xyz(ARENA_WIDTH / 2.0, ARENA_HEIGHT / 2.0, 0.0);
+    let mut transform = Transform::default();
+    transform.set_translation_xyz(ARENA_WIDTH / 2.0, ARENA_HEIGHT / 2.0, 0.0);
 
-    let sprite_render = SpriteRender {
-        sprite_sheet,
-        sprite_number: 1,
-    };
-
-    let ball = Ball {
-        radius: BALL_RADIUS,
-        velocity: [BALL_VELOCITY_X, BALL_VELOCITY_Y],
-    };
-
-    let active = Active {
-        countdown: Some(1.0),
-    };
+    let sprite = Sprite::new(sprite_sheet, 1);
+    let ball = Ball::new(BALL_RADIUS, [BALL_VELOCITY_X, BALL_VELOCITY_Y]);
+    let active = Active::new(1.0);
 
     world
         .create_entity()
-        .with(sprite_render)
+        .with(sprite.0)
         .with(ball)
-        .with(local_transform)
+        .with(transform)
         .with(active)
         .build()
 }
@@ -217,21 +207,18 @@ fn initialize_paddles(world: &mut World, sprite_sheet: Handle<SpriteSheet>) -> (
     right_transform.set_translation_xyz(ARENA_WIDTH - PADDLE_WIDTH * 0.5, y, 0.0);
 
     // A component to actually render the paddles.
-    let sprite_render = SpriteRender {
-        sprite_sheet,
-        sprite_number: 0,
-    };
+    let sprite = Sprite::new(sprite_sheet, 0);
 
     let left = world
         .create_entity()
-        .with(sprite_render.clone())
+        .with(sprite.0.clone())
         .with(Paddle::new(Side::Left))
         .with(left_transform)
         .build();
 
     let right = world
         .create_entity()
-        .with(sprite_render)
+        .with(sprite.0)
         .with(Paddle::new(Side::Right))
         .with(right_transform)
         .build();
