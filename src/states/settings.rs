@@ -21,7 +21,8 @@ struct Button {
 }
 
 pub struct Settings {
-    font: FontHandle, // TODO Put this in a global resource instead?
+    font: FontHandle,
+    sheet: Handle<SpriteSheet>,
     music: Option<Button>,
     control: Option<ButtonPair>,
     start: Option<UiButton>,
@@ -29,9 +30,10 @@ pub struct Settings {
 }
 
 impl Settings {
-    pub fn new(font: FontHandle) -> Self {
+    pub fn new(font: FontHandle, sheet: Handle<SpriteSheet>) -> Self {
         Settings {
             font,
+            sheet,
             music: None,
             control: None,
             start: None,
@@ -43,10 +45,9 @@ impl Settings {
 impl SimpleState for Settings {
     fn on_start(&mut self, data: StateData<GameData>) {
         let world = data.world;
-        let sheet = all_buttons(world);
-        let music = music_button(world, sheet.clone(), self.font.clone());
-        let (controls, c_label) = control_buttons(world, sheet.clone(), self.font.clone());
-        let start = start_button(world, sheet);
+        let music = music_button(world, &self.sheet, &self.font);
+        let (controls, c_label) = control_buttons(world, &self.sheet, &self.font);
+        let start = start_button(world, &self.sheet);
 
         // Header text.
         let header = core::generic_message(
@@ -160,17 +161,13 @@ fn toggle_button(world: &mut World, button: &mut Button) {
     }
 }
 
-fn all_buttons(world: &mut World) -> Handle<SpriteSheet> {
-    core::load_sprite_sheet(world, "button")
-}
-
-fn start_button(world: &mut World, sprite_sheet: Handle<SpriteSheet>) -> UiButton {
+fn start_button(world: &mut World, sprite_sheet: &Handle<SpriteSheet>) -> UiButton {
     let up = SpriteRender {
         sprite_sheet: sprite_sheet.clone(),
         sprite_number: 6,
     };
     let down = SpriteRender {
-        sprite_sheet,
+        sprite_sheet: sprite_sheet.clone(),
         sprite_number: 7,
     };
 
@@ -186,13 +183,13 @@ fn start_button(world: &mut World, sprite_sheet: Handle<SpriteSheet>) -> UiButto
 
 fn control_buttons(
     world: &mut World,
-    button_sheet: Handle<SpriteSheet>,
-    font: FontHandle,
+    button_sheet: &Handle<SpriteSheet>,
+    font: &FontHandle,
 ) -> (ButtonPair, Entity) {
     let left_up = sized_button(button_sheet.clone(), 2);
     let left_down = sized_button(button_sheet.clone(), 3);
     let right_up = sized_button(button_sheet.clone(), 4);
-    let right_down = sized_button(button_sheet, 5);
+    let right_down = sized_button(button_sheet.clone(), 5);
 
     let parent = {
         let transform = UiTransform::new(
@@ -243,7 +240,7 @@ fn control_buttons(
             .with(transform)
             .with(Parent::new(parent))
             .with(UiText::new(
-                font,
+                font.clone(),
                 "P1 Controls".to_string(),
                 [1.0, 1.0, 1.0, 1.0],
                 25.0,
@@ -276,7 +273,11 @@ fn sized_button(sprite_sheet: Handle<SpriteSheet>, sprite_number: usize) -> Size
     }
 }
 
-fn music_button(world: &mut World, button_sheet: Handle<SpriteSheet>, font: FontHandle) -> Button {
+fn music_button(
+    world: &mut World,
+    button_sheet: &Handle<SpriteSheet>,
+    font: &FontHandle,
+) -> Button {
     // A parent entity to align the Button and Text relative to.
     let parent = {
         let transform = UiTransform::new(
@@ -297,7 +298,7 @@ fn music_button(world: &mut World, button_sheet: Handle<SpriteSheet>, font: Font
         sprite_number: 0,
     };
     let pressed_button = SpriteRender {
-        sprite_sheet: button_sheet,
+        sprite_sheet: button_sheet.clone(),
         sprite_number: 1,
     };
 
@@ -343,7 +344,7 @@ fn music_button(world: &mut World, button_sheet: Handle<SpriteSheet>, font: Font
             .with(transform)
             .with(Parent::new(parent))
             .with(UiText::new(
-                font,
+                font.clone(),
                 "Music".to_string(),
                 [1.0, 1.0, 1.0, 1.0],
                 25.0,

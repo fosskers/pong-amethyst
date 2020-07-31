@@ -13,15 +13,17 @@ use amethyst::ui::*;
 #[derive(Default)]
 pub struct Welcome {
     font: Option<FontHandle>,
-    conf_button: Option<UiButton>,
-    start_button: Option<UiButton>,
+    sheet: Option<Handle<SpriteSheet>>,
+    conf: Option<UiButton>,
+    start: Option<UiButton>,
     entities: Vec<Entity>,
 }
 
 impl SimpleState for Welcome {
     fn on_start(&mut self, data: StateData<GameData>) {
         let world = data.world;
-        let (conf, start) = buttons(world);
+        let button_sheet = core::load_sprite_sheet(world, "button");
+        let (conf, start) = buttons(world, button_sheet.clone());
 
         // Read the font.
         let font: FontHandle = world.read_resource::<Loader>().load(
@@ -40,8 +42,9 @@ impl SimpleState for Welcome {
             start.text_entity,
             start.image_entity,
         ];
-        self.conf_button.replace(conf);
-        self.start_button.replace(start);
+        self.conf.replace(conf);
+        self.start.replace(start);
+        self.sheet.replace(button_sheet);
 
         initialize_camera(world);
         audio::initialize_audio(world);
@@ -57,12 +60,12 @@ impl SimpleState for Welcome {
             StateEvent::Ui(UiEvent {
                 target,
                 event_type: UiEventType::ClickStop,
-            }) => match (&self.conf_button, &self.start_button, &self.font) {
-                (Some(conf), Some(start), Some(font)) => {
+            }) => match (&self.conf, &self.start, &self.font, &self.sheet) {
+                (Some(conf), Some(start), Some(font), Some(sheet)) => {
                     if conf.image_entity == target {
-                        Trans::Replace(Box::new(Settings::new(font.clone())))
+                        Trans::Replace(Box::new(Settings::new(font.clone(), sheet.clone())))
                     } else if start.image_entity == target {
-                        Trans::Replace(Box::new(Settings::new(font.clone())))
+                        Trans::Replace(Box::new(Settings::new(font.clone(), sheet.clone())))
                     } else {
                         Trans::None
                     }
@@ -74,9 +77,7 @@ impl SimpleState for Welcome {
     }
 }
 
-fn buttons(world: &mut World) -> (UiButton, UiButton) {
-    let sprite_sheet = core::load_sprite_sheet(world, "button");
-
+fn buttons(world: &mut World, sprite_sheet: Handle<SpriteSheet>) -> (UiButton, UiButton) {
     let start_up = SpriteRender {
         sprite_sheet: sprite_sheet.clone(),
         sprite_number: 6,
@@ -142,14 +143,12 @@ fn initialize_logo(world: &mut World) -> Entity {
         }
     };
 
-    // TODO Fix up this position.
-    let mut local_transform = Transform::default();
-    local_transform.set_translation_xyz(ARENA_WIDTH / 2.0, ARENA_HEIGHT / 2.0, 0.0);
-    // local_transform.set_translation_xyz(ARENA_WIDTH / 2.0, ARENA_HEIGHT - 16.0, 0.0);
+    let mut transform = Transform::default();
+    transform.set_translation_xyz(ARENA_WIDTH / 2.0, ARENA_HEIGHT / 2.0, 0.0);
 
     world
         .create_entity()
-        .with(local_transform)
+        .with(transform)
         .with(sprite_render)
         .build()
 }
