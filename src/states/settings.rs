@@ -12,9 +12,9 @@ use amethyst::ui::*;
 /// A UI button that can be toggled, maintaining its up/down sprite until the
 /// next time it is clicked.
 struct Button {
-    ui_button: UiButton,
-    activation: UiButtonActionRetrigger,
-    deactivation: UiButtonActionRetrigger,
+    button: UiButton,
+    activate: UiButtonActionRetrigger,
+    deactivate: UiButtonActionRetrigger,
     is_pressed: bool,
     label: Entity,
     parent: Entity,
@@ -22,9 +22,9 @@ struct Button {
 
 pub struct Settings {
     font: FontHandle, // TODO Put this in a global resource instead?
-    music_button: Option<Button>,
-    control_buttons: Option<ButtonPair>,
-    start_button: Option<UiButton>,
+    music: Option<Button>,
+    control: Option<ButtonPair>,
+    start: Option<UiButton>,
     entities: Vec<Entity>,
 }
 
@@ -32,9 +32,9 @@ impl Settings {
     pub fn new(font: FontHandle) -> Self {
         Settings {
             font,
-            music_button: None,
-            control_buttons: None,
-            start_button: None,
+            music: None,
+            control: None,
+            start: None,
             entities: vec![],
         }
     }
@@ -44,7 +44,7 @@ impl SimpleState for Settings {
     fn on_start(&mut self, data: StateData<GameData>) {
         let world = data.world;
         let sheet = all_buttons(world);
-        let music_button = music_button(world, sheet.clone(), self.font.clone());
+        let music = music_button(world, sheet.clone(), self.font.clone());
         let (controls, c_label) = control_buttons(world, sheet.clone(), self.font.clone());
         let start = start_button(world, sheet);
 
@@ -58,7 +58,7 @@ impl SimpleState for Settings {
         );
 
         // Usage instructions.
-        let instructions = core::generic_message(
+        let usage = core::generic_message(
             world,
             self.font.clone(),
             Anchor::BottomMiddle,
@@ -69,11 +69,11 @@ impl SimpleState for Settings {
         // Reset state fields.
         self.entities = vec![
             header,
-            instructions,
-            music_button.ui_button.text_entity,
-            music_button.ui_button.image_entity,
-            music_button.label,
-            music_button.parent,
+            usage,
+            music.button.text_entity,
+            music.button.image_entity,
+            music.label,
+            music.parent,
             controls.left_button.text_entity,
             controls.left_button.image_entity,
             controls.right_button.text_entity,
@@ -83,9 +83,9 @@ impl SimpleState for Settings {
             start.text_entity,
             start.image_entity,
         ];
-        self.music_button.replace(music_button);
-        self.control_buttons.replace(controls);
-        self.start_button.replace(start);
+        self.music.replace(music);
+        self.control.replace(controls);
+        self.start.replace(start);
     }
 
     fn on_stop(&mut self, data: StateData<GameData>) {
@@ -93,47 +93,56 @@ impl SimpleState for Settings {
     }
 
     fn handle_event(&mut self, data: StateData<GameData>, event: StateEvent) -> SimpleTrans {
+        let world = data.world;
+        let font = &self.font;
+
         match event {
             StateEvent::Input(InputEvent::ActionPressed(a)) if a == "quit" => Trans::Quit,
             StateEvent::Ui(UiEvent {
                 target,
                 event_type: UiEventType::ClickStop,
-            }) => {
-                // Was the music button pressed?
-                if let Some(button) = self.music_button.as_mut() {
-                    if button.ui_button.image_entity == target {
-                        println!("[HANDLE_EVENT] You clicked the music button!");
-                        audio::toggle_bgm(data.world);
-                        toggle_button(data.world, button);
-                    }
-                }
-
-                // Were the control buttons pressed?
-                if let Some(button) = self.control_buttons.as_mut() {
-                    match button.pressed_side {
-                        Pressed::Right if button.left_button.image_entity == target => {
-                            println!("[HANDLE_EVENT] You clicked the WS button!");
-                            button.pressed_side = Pressed::Left;
-                        }
-                        Pressed::Left if button.right_button.image_entity == target => {
-                            println!("[HANDLE_EVENT] You clicked the WR button!");
-                            button.pressed_side = Pressed::Right;
-                        }
-                        _ => {}
-                    }
-                }
-
-                // Was the Start button pressed?
-                if let Some(button) = &self.start_button {
-                    if button.image_entity == target {
-                        return Trans::Replace(Box::new(Pong::new(self.font.clone())));
-                    }
-                }
-
-                Trans::None
-            }
+            }) => match (
+                self.music.as_mut(),
+                self.control.as_mut(),
+                self.start.as_ref(),
+            ) {
+                (Some(mb), Some(cb), Some(sb)) => click(world, target, mb, cb, sb, font),
+                _ => Trans::None,
+            },
             _ => Trans::None,
         }
+    }
+}
+
+/// Handle all click events on the screen.
+fn click(
+    world: &mut World,
+    target: Entity,
+    mb: &mut Button,
+    cb: &mut ButtonPair,
+    sb: &UiButton,
+    font: &FontHandle,
+) -> SimpleTrans {
+    if mb.button.image_entity == target {
+        println!("[HANDLE_EVENT] You clicked the music button!");
+        audio::toggle_bgm(world);
+        toggle_button(world, mb);
+        Trans::None
+    } else if sb.image_entity == target {
+        Trans::Replace(Box::new(Pong::new(font.clone())))
+    } else {
+        match cb.pressed_side {
+            Pressed::Right if cb.left_button.image_entity == target => {
+                println!("[HANDLE_EVENT] You clicked the WS button!");
+                cb.pressed_side = Pressed::Left;
+            }
+            Pressed::Left if cb.right_button.image_entity == target => {
+                println!("[HANDLE_EVENT] You clicked the WR button!");
+                cb.pressed_side = Pressed::Right;
+            }
+            _ => {}
+        }
+        Trans::None
     }
 }
 
@@ -143,11 +152,11 @@ impl SimpleState for Settings {
 fn toggle_button(world: &mut World, button: &mut Button) {
     button.is_pressed = !button.is_pressed;
     let mut storage = world.write_storage::<UiButtonActionRetrigger>();
-    storage.remove(button.ui_button.image_entity);
+    storage.remove(button.button.image_entity);
     if button.is_pressed {
-        let _ = storage.insert(button.ui_button.image_entity, button.deactivation.clone());
+        let _ = storage.insert(button.button.image_entity, button.deactivate.clone());
     } else {
-        let _ = storage.insert(button.ui_button.image_entity, button.activation.clone());
+        let _ = storage.insert(button.button.image_entity, button.activate.clone());
     }
 }
 
@@ -303,7 +312,7 @@ fn music_button(world: &mut World, button_sheet: Handle<SpriteSheet>, font: Font
         .build_from_world(&world);
 
     // Register button reactions.
-    let (activation, deactivation) = {
+    let (activate, deactivate) = {
         let mut storage = world.write_storage::<UiButtonActionRetrigger>();
         let deactivation = retrigger(
             ui_button.image_entity,
@@ -345,9 +354,9 @@ fn music_button(world: &mut World, button_sheet: Handle<SpriteSheet>, font: Font
     };
 
     Button {
-        ui_button: ui_button.clone(),
-        activation,
-        deactivation,
+        button: ui_button.clone(),
+        activate,
+        deactivate,
         is_pressed: true,
         label,
         parent,
