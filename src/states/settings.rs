@@ -1,5 +1,5 @@
 use crate::audio;
-use crate::core::{self, ButtonPair, Pressed, SizedSprite};
+use crate::core::{self, ButtonPair, Pressed, SizedSprite, BUTTON_SCALING};
 use crate::states::playing::Pong;
 use amethyst::assets::Handle;
 use amethyst::core::Parent;
@@ -8,8 +8,6 @@ use amethyst::input::InputEvent;
 use amethyst::prelude::*;
 use amethyst::renderer::{SpriteRender, SpriteSheet};
 use amethyst::ui::*;
-
-const BUTTON_SCALING: f32 = 3.0;
 
 /// A UI button that can be toggled, maintaining its up/down sprite until the
 /// next time it is clicked.

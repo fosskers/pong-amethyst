@@ -20,6 +20,8 @@ pub const BALL_VELOCITY_X: f32 = 65.0;
 pub const BALL_VELOCITY_Y: f32 = 50.0;
 pub const BALL_RADIUS: f32 = 2.0;
 
+pub const BUTTON_SCALING: f32 = 3.0;
+
 /// A `SpriteRender` that knows its pixel dimensions.
 pub struct SizedSprite {
     pub sprite: SpriteRender,
