@@ -5,9 +5,7 @@ authors = ["Colin Woodbury <colin@fosskers.ca>"]
 edition = "2018"
 
 [dependencies.amethyst]
-version = "0.15"
-git = "https://github.com/amethyst/amethyst"
-rev = "bb912d99f92a54f62626d509bb79ac9fd79309fa"
+version = "0.15.3"
 default-features = false
 features = ["vulkan", "audio"]
 
