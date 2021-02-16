@@ -1,3 +1,5 @@
+//! Loading audio files and toggling music.
+
 use amethyst::assets::{AssetStorage, Loader};
 use amethyst::audio::output::Output;
 use amethyst::audio::{AudioSink, OggFormat, Source, SourceHandle};
@@ -47,6 +49,16 @@ pub fn initialize_audio(world: &mut World) {
 
     world.insert(sound_effects);
     world.insert(music);
+}
+
+/// Turn the background music on or off, depending on its current state.
+pub fn toggle_bgm(world: &mut World) {
+    let sink = world.read_resource::<AudioSink>();
+    if sink.is_paused() {
+        sink.play();
+    } else {
+        sink.pause();
+    }
 }
 
 pub fn play_bounce_sound(sounds: &Sounds, storage: &AssetStorage<Source>, output: Option<&Output>) {
